@@ -233,13 +233,15 @@ class CheckoutPageTest(CourseCatalogTestMixin, TestCase, JwtMixin):
         }),
         (('ecommerce.extensions.payment.processors.paypal.Paypal',), {
             'payment_processors': {
-                'cybersource': 'Checkout'
+                'cybersource': 'Checkout',
+                'payu': 'Checkout with payu',
             }
         }),
         ((), {
             'payment_processors': {
                 'cybersource': 'Checkout',
-                'paypal': 'Checkout with PayPal'
+                'paypal': 'Checkout with PayPal',
+                'payu': 'Checkout with payu',
             }
         })
     )
