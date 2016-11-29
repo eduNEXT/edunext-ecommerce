@@ -3,8 +3,9 @@
 """
 This file contains models used by edunext for customizing the ecommerce service.
 """
+import collections
+
 from django.db import models
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 from jsonfield.fields import JSONField
@@ -25,10 +26,11 @@ class SiteOptions(models.Model):
         null=False,
         blank=False,
         default={},
+        load_kwargs={'object_pairs_hook': collections.OrderedDict},
     )
 
     class Meta(object):
         """
         Meta class for SiteOptions model
         """
-        verbose_name_plural = "stories"
+        verbose_name_plural = "SiteOptions"

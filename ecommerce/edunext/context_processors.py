@@ -3,7 +3,6 @@
 """
 This file contains django context_processors needed by edunext.
 """
-import json
 
 
 def theme_options(request):
@@ -12,19 +11,23 @@ def theme_options(request):
     in a way that is unobstrusive and easy to migrate between releases
     """
     options_obj = request.site.options.last()
-
     if options_obj:
         try:
-            options = json.loads(options_obj.options_blob)
-        except TypeError as e:
+            options = options_obj.options_blob
+        except TypeError:
             # Good place for a logger
             options = {}
     else:
         options = {}
 
+    try:
+        site_theme_name = request.site_theme.theme_dir_name
+    except AttributeError:
+        site_theme_name = None
+
     extra_context = {
-        "theme_dir_name": request.site_theme.theme_dir_name,
-        "siteconfiguration": request.site.siteconfiguration,
+        "theme_dir_name": site_theme_name,
+        "site_configuration": request.site.siteconfiguration,
         "options": options,
     }
     return extra_context

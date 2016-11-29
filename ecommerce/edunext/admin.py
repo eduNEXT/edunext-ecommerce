@@ -21,4 +21,5 @@ class SiteOptionsAdmin(admin.ModelAdmin):
         """
         model = SiteOptions
 
+
 admin.site.register(SiteOptions, SiteOptionsAdmin)

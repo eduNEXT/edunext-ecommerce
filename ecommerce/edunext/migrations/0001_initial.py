@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('site', models.ForeignKey(related_name='options', to='sites.Site')),
             ],
             options={
-                'verbose_name_plural': 'stories',
+                'verbose_name_plural': 'SiteOptions',
             },
         ),
     ]
