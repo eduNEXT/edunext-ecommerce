@@ -3,6 +3,7 @@
 """
 This file contains django context_processors needed by edunext.
 """
+from ecommerce.edunext.models import SiteOptions
 
 
 def theme_options(request):
@@ -10,14 +11,11 @@ def theme_options(request):
     This context processor lets us add extra context to the themable templates
     in a way that is unobstrusive and easy to migrate between releases
     """
-    options_obj = request.site.options.last()
-    if options_obj:
-        try:
-            options = options_obj.options_blob
-        except TypeError:
-            # Good place for a logger
-            options = {}
-    else:
+
+    try:
+        options = request.site.siteoptions
+    except SiteOptions.DoesNotExist:
+        # Good place for a logger
         options = {}
 
     try:
@@ -25,9 +23,8 @@ def theme_options(request):
     except AttributeError:
         site_theme_name = None
 
-    extra_context = {
+    return {
         "theme_dir_name": site_theme_name,
         "site_configuration": request.site.siteconfiguration,
         "options": options,
     }
-    return extra_context
