@@ -192,6 +192,7 @@ TEMPLATES = [
                 'oscar.core.context_processors.metadata',
                 'ecommerce.core.context_processors.core',
                 'ecommerce.extensions.analytics.context_processors.analytics',
+                'ecommerce.edunext.context_processors.theme_options',
             ),
             'debug': True,  # Django will only display debug pages if the global DEBUG setting is set to True.
         }
@@ -270,6 +271,8 @@ LOCAL_APPS = [
 
     # Theming app for customizing visual and behavioral attributes of a site
     'ecommerce.theming',
+    # Extensions app to modify the behavior of the project
+    'ecommerce.edunext',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
