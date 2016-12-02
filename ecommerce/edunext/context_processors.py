@@ -13,7 +13,7 @@ def theme_options(request):
     """
 
     try:
-        options = request.site.siteoptions
+        options = request.site.siteoptions.options_blob
     except SiteOptions.DoesNotExist:
         # Good place for a logger
         options = {}
