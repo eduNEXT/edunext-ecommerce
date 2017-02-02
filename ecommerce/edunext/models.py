@@ -6,6 +6,7 @@ This file contains models used by edunext for customizing the ecommerce service.
 import collections
 
 from django.db import models
+from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 from jsonfield.fields import JSONField
 
@@ -33,3 +34,8 @@ class SiteOptions(models.Model):
         Meta class for SiteOptions model
         """
         verbose_name_plural = "SiteOptions"
+
+    def save(self, *args, **kwargs):
+        # Clear Site cache upon SiteOptions changed
+        Site.objects.clear_cache()
+        super(SiteOptions, self).save(*args, **kwargs)
