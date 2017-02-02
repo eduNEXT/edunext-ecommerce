@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import logging
 
-from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Q, Count
 from django.utils.translation import ugettext_lazy as _
@@ -16,6 +15,7 @@ from ecommerce.core.constants import (
 )
 from ecommerce.courses.publishers import LMSPublisher
 from ecommerce.extensions.catalogue.utils import generate_sku
+from ecommerce.edunext.conf import settings
 
 logger = logging.getLogger(__name__)
 Category = get_model('catalogue', 'Category')
@@ -217,6 +217,7 @@ class Course(models.Model):
                 course_id
             )
 
+        import ipdb; ipdb.set_trace()
         stock_record.price_excl_tax = price
         stock_record.price_currency = settings.OSCAR_DEFAULT_CURRENCY
         stock_record.save()
