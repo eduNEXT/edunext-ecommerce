@@ -217,7 +217,6 @@ class Course(models.Model):
                 course_id
             )
 
-        import ipdb; ipdb.set_trace()
         stock_record.price_excl_tax = price
         stock_record.price_currency = settings.OSCAR_DEFAULT_CURRENCY
         stock_record.save()
