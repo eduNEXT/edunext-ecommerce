@@ -6,6 +6,7 @@ This file contains models used by edunext for customizing the ecommerce service.
 import collections
 
 from django.db import models
+from django.db.models.signals import pre_delete
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 from jsonfield.fields import JSONField
@@ -39,3 +40,14 @@ class SiteOptions(models.Model):
         # Clear Site cache upon SiteOptions changed
         Site.objects.clear_cache()
         super(SiteOptions, self).save(*args, **kwargs)
+
+
+def clear_site_cache(sender, **kwargs):
+    # pylint: disable=unused-argument
+    """
+    Clear the cache (if primed) each time a site is saved or deleted.
+    """
+    Site.objects.clear_cache()
+
+
+pre_delete.connect(clear_site_cache, sender=SiteOptions)
