@@ -34,7 +34,6 @@ class SiteAwareSettings(object):
             # May be log some message
             options = {}
 
-        self._current_site_options = options
         return options
 
     def __getattr__(self, name):
