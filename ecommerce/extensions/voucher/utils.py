@@ -5,17 +5,22 @@ import datetime
 import hashlib
 import logging
 import uuid
+import pytz
 
 import dateutil.parser
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_lazy as _
 from opaque_keys.edx.keys import CourseKey
 from oscar.core.loading import get_model
-from oscar.templatetags.currency_filters import currency
-import pytz
+
+# eduNEXT note: disabling translations for this file to avoid
+# failures generating coupons csv files
+from ecommerce.edunext.utils import disable_translation as _
+# eduNEXT note: using proxy ednx_currency function to avoid unicode results
+# that are unsupported by csv file generator used by ecommerce
+from ecommerce.edunext.utils import ednx_currency as currency
 
 from ecommerce.core.url_utils import get_ecommerce_url
 from ecommerce.extensions.api import exceptions
