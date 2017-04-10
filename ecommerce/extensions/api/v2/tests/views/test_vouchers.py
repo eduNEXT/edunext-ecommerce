@@ -20,6 +20,7 @@ from rest_framework.test import APIRequestFactory
 from slumber.exceptions import SlumberBaseException
 
 from ecommerce.core.tests.decorators import mock_course_catalog_api_client
+from ecommerce.core.url_utils import get_lms_url
 from ecommerce.coupons.tests.mixins import CourseCatalogMockMixin, CouponMixin
 from ecommerce.courses.tests.factories import CourseFactory
 from ecommerce.extensions.api import serializers
@@ -240,11 +241,10 @@ class VoucherViewOffersEndpointTests(
 
         self.assertEqual(response.status_code, 400)
 
-    @mock_course_catalog_api_client
     def test_voucher_offers_listing_for_a_single_course_voucher(self):
         """ Verify the endpoint returns offers data when a single product is in voucher range. """
         course, seat = self.create_course_and_seat()
-        self.mock_dynamic_catalog_single_course_runs_api(course)
+        self.mock_course_api_response(course=course)
         new_range = RangeFactory(products=[seat, ])
         new_range.catalog = Catalog.objects.create(partner=self.partner)
         new_range.catalog.stock_records.add(StockRecord.objects.get(product=seat))
@@ -293,7 +293,7 @@ class VoucherViewOffersEndpointTests(
     def test_voucher_offers_listing_product_found(self):
         """ Verify the endpoint returns offers data for single product range. """
         course, seat = self.create_course_and_seat()
-        self.mock_dynamic_catalog_single_course_runs_api(course)
+        self.mock_course_api_response(course=course)
 
         new_range = RangeFactory(products=[seat, ])
         voucher, __ = prepare_voucher(_range=new_range, benefit_value=10)
@@ -353,7 +353,7 @@ class VoucherViewOffersEndpointTests(
         voucher, __ = prepare_voucher(_range=new_range, benefit_value=10)
         benefit = voucher.offers.first().benefit
         request = self.prepare_offers_listing_request(voucher.code)
-        self.mock_dynamic_catalog_single_course_runs_api(course)
+        self.mock_course_api_response(course=course)
         offers = VoucherViewSet().get_offers(request=request, voucher=voucher)['results']
         first_offer = offers[0]
 
@@ -366,7 +366,7 @@ class VoucherViewOffersEndpointTests(
             'contains_verified': True,
             'course_start_date': '2013-02-05T05:00:00Z',
             'id': course.id,
-            'image_url': '/path/to/image.jpg',
+            'image_url': get_lms_url('/asset-v1:test+test+test+type@asset+block@images_course_image.jpg'),
             'multiple_credit_providers': False,
             'organization': CourseKey.from_string(course.id).org,
             'credit_provider_price': None,
