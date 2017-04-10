@@ -120,7 +120,7 @@ class BasketSummaryView(BasketView):
             short_description = course.get('short_description', '')
             course_name = course['name']
         except (ConnectionError, SlumberBaseException, Timeout):
-                logger.exception('Failed to retrieve data from Course API for course [%s].', course_key)
+            logger.exception('Failed to retrieve data from Course API for course [%s].', course_key)
 
         return {
             'product_title': course_name,

@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import json
 
+import unittest
 import ddt
 import httpretty
 import pytz
@@ -19,7 +20,6 @@ from requests.exceptions import ConnectionError, Timeout
 from slumber.exceptions import SlumberBaseException
 from testfixtures import LogCapture
 from waffle.testutils import override_flag
-import unittest
 
 from ecommerce.core.constants import ENROLLMENT_CODE_PRODUCT_CLASS_NAME, ENROLLMENT_CODE_SWITCH
 from ecommerce.core.exceptions import SiteConfigurationError
