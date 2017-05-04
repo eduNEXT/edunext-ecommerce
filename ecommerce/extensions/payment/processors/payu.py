@@ -8,10 +8,8 @@ from oscar.apps.payment.exceptions import GatewayError, TransactionDeclined
 from oscar.core.loading import get_model
 from ecommerce.core.url_utils import get_lms_url
 
-# from ecommerce.core.constants import ISO_8601_FORMAT
-from ecommerce.extensions.order.constants import PaymentEventTypeName
 from ecommerce.extensions.payment.exceptions import InvalidSignatureError
-from ecommerce.extensions.payment.processors import BasePaymentProcessor
+from ecommerce.extensions.payment.processors import BasePaymentProcessor, HandledProcessorResponse
 
 
 logger = logging.getLogger(__name__)
@@ -76,7 +74,7 @@ class Payu(BasePaymentProcessor):
     def error_page_url(self):
         return get_lms_url(self.configuration['error_path'])
 
-    def get_transaction_parameters(self, basket, request=None):
+    def get_transaction_parameters(self, basket, request=None, use_client_side_checkout=False, **kwargs):
         """
         Generate a dictionary of signed parameters PayU requires to complete a transaction.
 
@@ -173,25 +171,19 @@ class Payu(BasePaymentProcessor):
 
             raise exception
 
-        # Create Source to track all transactions related to this processor and order
-        source_type, __ = SourceType.objects.get_or_create(name=self.NAME)
-        currency = response['currency']
-        total = Decimal(response['value'])
-        transaction_id = response['transaction_id']
-        req_card_number = response['cc_number'] or ''
+        currency = response.get('currency')
+        total = Decimal(response.get('value'))
+        transaction_id = response.get('transaction_id')
+        card_number = response.get('cc_number', '')
+        card_type = response.get('lapPaymentMethod', '')
 
-        source = Source(source_type=source_type,
-                        currency=currency,
-                        amount_allocated=total,
-                        amount_debited=total,
-                        reference=transaction_id,
-                        label=req_card_number)
-
-        # Create PaymentEvent to track
-        event_type, __ = PaymentEventType.objects.get_or_create(name=PaymentEventTypeName.PAID)
-        event = PaymentEvent(event_type=event_type, amount=total, reference=transaction_id, processor_name=self.NAME)
-
-        return source, event
+        return HandledProcessorResponse(
+            transaction_id=transaction_id,
+            total=total,
+            currency=currency,
+            card_number=card_number,
+            card_type=card_type,
+        )
 
     def _generate_signature(self, parameters, signature_type):
         """
