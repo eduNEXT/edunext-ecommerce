@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.http import HttpResponse
 
@@ -14,6 +15,7 @@ from oscar.core.loading import get_class, get_model
 from oscar.apps.payment.exceptions import PaymentError, TransactionDeclined
 
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
+from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.exceptions import InvalidSignatureError
 from ecommerce.extensions.payment.processors.payu import Payu
 
@@ -181,11 +183,14 @@ class PayUPaymentResponseView(EdxOrderPlacementMixin, View):
 
             if not basket:
                 logger.error('Received payer notification for non-existent basket [%s].', basket_id)
-                return redirect(self.payment_processor.error_page_url)
+                return redirect(reverse('payment_error'))
         except:  # pylint: disable=bare-except
-            return redirect(self.payment_processor.error_page_url)
+            return redirect(reverse('payment_error'))
 
-        receipt_url = u'{}?orderNum={}'.format(self.payment_processor.receipt_page_url, basket.order_number)
+        receipt_url = get_receipt_page_url(
+            order_number=basket.order_number,
+            site_configuration=basket.site.siteconfiguration
+        )
 
         try:
             return redirect(receipt_url)
