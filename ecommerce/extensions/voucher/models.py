@@ -4,7 +4,7 @@ import logging
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from oscar.apps.voucher.abstract_models import AbstractVoucher
+from oscar.apps.voucher.abstract_models import AbstractVoucher  # pylint: disable=ungrouped-imports
 
 logger = logging.getLogger(__name__)
 
@@ -53,4 +53,4 @@ class Voucher(AbstractVoucher):
             raise ValidationError(_('Voucher start and end datetime fields must be type datetime.'))
 
 
-from oscar.apps.voucher.models import *  # noqa pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position
+from oscar.apps.voucher.models import *  # noqa pylint: disable=wildcard-import,unused-wildcard-import,wrong-import-position,ungrouped-imports
