@@ -6,7 +6,6 @@ from hashlib import md5
 
 from oscar.apps.payment.exceptions import GatewayError, TransactionDeclined
 from oscar.core.loading import get_model
-from ecommerce.core.url_utils import get_lms_url
 
 from ecommerce.extensions.payment.exceptions import InvalidSignatureError
 from ecommerce.extensions.payment.processors import BasePaymentProcessor, HandledProcessorResponse
@@ -61,18 +60,6 @@ class Payu(BasePaymentProcessor):
 
         self.response_url = configuration['response_url']
         self.confirmation_url = configuration['confirmation_url']
-
-    @property
-    def receipt_page_url(self):
-        return get_lms_url(self.configuration['receipt_path'])
-
-    @property
-    def cancel_page_url(self):
-        return get_lms_url(self.configuration['cancel_path'])
-
-    @property
-    def error_page_url(self):
-        return get_lms_url(self.configuration['error_path'])
 
     def get_transaction_parameters(self, basket, request=None, use_client_side_checkout=False, **kwargs):
         """
