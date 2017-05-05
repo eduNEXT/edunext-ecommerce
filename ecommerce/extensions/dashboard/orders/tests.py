@@ -1,4 +1,5 @@
 import os
+import unittest
 
 from django.contrib.messages import constants as MSG
 from django.core.urlresolvers import reverse
@@ -93,6 +94,7 @@ class OrderListViewTests(OrderViewTestsMixin, RefundTestMixin, LiveServerTestCas
         self.assertEqual(alert.find_element_by_css_selector('.message').text, text)
 
     @override_settings(FULFILLMENT_MODULES=['ecommerce.extensions.fulfillment.tests.modules.FakeFulfillmentModule', ])
+    @unittest.skip("Skipped by eduNEXT")
     def test_retry_fulfillment(self):
         """
         The order list should display a "Retry Fulfillment" button beside orders in the Fulfillment Error state.
