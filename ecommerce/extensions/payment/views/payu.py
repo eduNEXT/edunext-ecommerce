@@ -44,7 +44,7 @@ class PayUPaymentResponseView(EdxOrderPlacementMixin, View):
     def dispatch(self, request, *args, **kwargs):
         return super(PayUPaymentResponseView, self).dispatch(request, *args, **kwargs)
 
-    def _get_billing_address(self, payu_response, user):
+    def _get_billing_address(self, payu_response):
 
         return BillingAddress(
             first_name=payu_response.get('cc_holder', ''),
@@ -142,7 +142,7 @@ class PayUPaymentResponseView(EdxOrderPlacementMixin, View):
             # thus we use the amounts stored in the database rather than those received from the payment processor.
             user = basket.owner
             order_total = OrderTotalCalculator().calculate(basket, shipping_charge)
-            billing_address = self._get_billing_address(payu_response, user)
+            billing_address = self._get_billing_address(payu_response)
 
             self.handle_order_placement(
                 order_number,

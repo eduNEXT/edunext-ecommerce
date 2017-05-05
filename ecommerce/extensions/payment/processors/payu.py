@@ -242,7 +242,7 @@ class Payu(BasePaymentProcessor):
         """Returns a boolean indicating if the response's signature (indicating potential tampering) is valid."""
         return response and (self._generate_signature(response, self.CONFIRMATION_SIGNATURE) == response.get('sign'))
 
-    def issue_credit(self, source, amount, currency):
+    def issue_credit(self, order, reference_number, amount, currency):  # pylint: disable=unused-argument
         """
         This method should be implemented in the future in order
         to accept payment refunds
