@@ -102,6 +102,7 @@ OSCAR_DEFAULT_CURRENCY = 'USD'
 PAYMENT_PROCESSORS = (
     'ecommerce.extensions.payment.processors.cybersource.Cybersource',
     'ecommerce.extensions.payment.processors.paypal.Paypal',
+    'ecommerce.extensions.payment.processors.payu.Payu',
 )
 
 PAYMENT_PROCESSOR_RECEIPT_PATH = '/checkout/receipt/'
