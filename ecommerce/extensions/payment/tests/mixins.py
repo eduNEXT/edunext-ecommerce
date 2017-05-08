@@ -753,3 +753,23 @@ class PaypalMixin(object):
         root = 'https://api.sandbox.paypal.com' if mode == 'sandbox' else 'https://api.paypal.com'
 
         return urljoin(root, path)
+
+
+class PayuMixin(object):
+    """ Mixin with helper methods for testing PayU notifications. """
+
+    def generate_response(self, basket, transaction_state=u'4', billing_address=None, **kwargs):
+        """ Generates a dict containing the API reply fields expected to be received from PayU. """
+        # pylint: disable=unused-argument
+        total = unicode(basket.total_incl_tax)
+
+        response = {
+            u'state_pol': transaction_state,
+            u'value': total,
+            u'transaction_id': u'123456',
+            u'currency': u'USD',
+            u'reference_sale': basket.order_number,
+            u'cc_number': u'XXXXXXXXX-2536',
+        }
+
+        return response
