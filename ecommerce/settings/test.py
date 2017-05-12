@@ -92,6 +92,17 @@ PAYMENT_PROCESSOR_CONFIG = {
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
         },
+        'payu': {
+            'payment_page_url': 'https://sandbox.gateway.payulatam.com/ppp-web-gateway',
+            'response_url': 'fake-response-url',
+            'confirmation_url': 'fake-confirmation-url',
+            'merchant_id': '123456',
+            'account_id': '123456',
+            'api_key': 'fake-api-key',
+            'tax': '0',
+            'tax_return_base': '0',
+            'test': '1',
+        },
         'invoice': {}
     },
     'other': {
@@ -114,6 +125,17 @@ PAYMENT_PROCESSOR_CONFIG = {
             'receipt_path': PAYMENT_PROCESSOR_RECEIPT_PATH,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
+        },
+        'payu': {
+            'payment_page_url': 'https://sandbox.gateway.payulatam.com/ppp-web-gateway',
+            'response_url': 'fake-response-url',
+            'confirmation_url': 'fake-confirmation-url',
+            'merchant_id': '123456',
+            'account_id': '123456',
+            'api_key': 'fake-api-key',
+            'tax': '0',
+            'tax_return_base': '0',
+            'test': '1',
         },
         'invoice': {}
     }
