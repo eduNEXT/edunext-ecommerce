@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import logging
 
 import waffle
-from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count, Q
 from django.utils.timezone import now, timedelta
@@ -16,6 +15,7 @@ from ecommerce.core.constants import (
 )
 from ecommerce.courses.publishers import LMSPublisher
 from ecommerce.extensions.catalogue.utils import generate_sku
+from ecommerce.edunext.conf import settings
 
 logger = logging.getLogger(__name__)
 Category = get_model('catalogue', 'Category')
