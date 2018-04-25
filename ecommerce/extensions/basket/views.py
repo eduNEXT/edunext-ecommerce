@@ -19,7 +19,7 @@ from slumber.exceptions import SlumberBaseException
 
 from ecommerce.core.exceptions import SiteConfigurationError
 from ecommerce.core.url_utils import get_lms_url
-from ecommerce.courses.utils import get_certificate_type_display_value, get_course_info_from_catalog
+from ecommerce.courses.utils import get_certificate_type_display_value, get_course_info_from_lms
 from ecommerce.enterprise.entitlements import get_enterprise_code_redemption_redirect
 from ecommerce.enterprise.utils import CONSENT_FAILED_PARAM, get_enterprise_customer_from_voucher
 from ecommerce.extensions.analytics.utils import (
@@ -174,13 +174,13 @@ class BasketSummaryView(BasketView):
         course_end = None
 
         try:
-            course = get_course_info_from_catalog(self.request.site, course_key)
+            course = get_course_info_from_lms(course_key)
             try:
-                image_url = course['image']['src']
+                image_url = course['media']['image']['raw']
             except (KeyError, TypeError):
                 image_url = ''
             short_description = course.get('short_description', '')
-            course_name = course.get('title', '')
+            course_name = course.get('name', '')
 
             # The course start/end dates are not currently used
             # in the default basket templates, but we are adding
@@ -189,7 +189,7 @@ class BasketSummaryView(BasketView):
             course_start = self._deserialize_date(course.get('start'))
             course_end = self._deserialize_date(course.get('end'))
         except (ConnectionError, SlumberBaseException, Timeout):
-            logger.exception('Failed to retrieve data from Catalog Service for course [%s].', course_key)
+            logger.exception('Failed to retrieve data from Course API for course [%s].', course_key)
 
         return {
             'product_title': course_name,

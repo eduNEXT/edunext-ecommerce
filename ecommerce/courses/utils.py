@@ -4,6 +4,9 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
 
+from edx_rest_api_client.client import EdxRestApiClient
+
+from ecommerce.core.url_utils import get_lms_url
 from ecommerce.core.utils import traverse_pagination
 
 
@@ -22,17 +25,16 @@ def mode_for_seat(product):
     return mode
 
 
-def get_course_info_from_catalog(site, course_key):
-    """ Get course information from catalog service and cache """
-    api = site.siteconfiguration.course_catalog_api_client
-    partner_short_code = site.siteconfiguration.partner.short_code
-    cache_key = 'courses_api_detail_{}{}'.format(course_key, partner_short_code)
-    cache_key = hashlib.md5(cache_key).hexdigest()
-    course_run = cache.get(cache_key)
-    if not course_run:  # pragma: no cover
-        course_run = api.course_runs(course_key).get(partner=partner_short_code)
-        cache.set(cache_key, course_run, settings.COURSES_API_CACHE_TIMEOUT)
-    return course_run
+def get_course_info_from_lms(course_key):
+    """ Get course information from LMS via the course api and cache """
+    api = EdxRestApiClient(get_lms_url('api/courses/v1/'))
+    cache_key = 'courses_api_detail_{}'.format(course_key)
+    cache_hash = hashlib.md5(cache_key).hexdigest()
+    course = cache.get(cache_hash)
+    if not course:  # pragma: no cover
+        course = api.courses(course_key).get()
+        cache.set(cache_hash, course, settings.COURSES_API_CACHE_TIMEOUT)
+    return course
 
 
 def get_course_catalogs(site, resource_id=None):
