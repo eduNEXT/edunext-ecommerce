@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import logging
 
-from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count, Q
 from django.utils.timezone import now, timedelta
@@ -15,6 +14,7 @@ from ecommerce.core.constants import (
     SEAT_PRODUCT_CLASS_NAME
 )
 from ecommerce.courses.publishers import LMSPublisher
+from ecommerce.edunext.conf import settings
 from ecommerce.extensions.catalogue.utils import generate_sku
 
 logger = logging.getLogger(__name__)
