@@ -433,7 +433,6 @@ class BasketSummaryViewTests(EnterpriseServiceMockMixin, DiscoveryTestMixin, Dis
         line_data = response.context['formset_lines_data'][0][1]
         self.assertEqual(line_data['benefit_value'], format_benefit_value(benefit))
         self.assertEqual(line_data['seat_type'], seat.attr.certificate_type.capitalize())
-        self.assertEqual(line_data['product_title'], self.course.name)
         self.assertFalse(line_data['enrollment_code'])
         self.assertEqual(response.context['payment_processors'][0].NAME, DummyProcessor.NAME)
 
