@@ -1,9 +1,11 @@
 import hashlib
 
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
-from opaque_keys.edx.keys import CourseKey
+from edx_rest_api_client.client import EdxRestApiClient
 
+from ecommerce.core.url_utils import get_lms_url
 from ecommerce.cache_utils.utils import TieredCache
 from ecommerce.core.utils import deprecated_traverse_pagination
 
@@ -23,28 +25,15 @@ def mode_for_product(product):
     return mode
 
 
-def get_course_info_from_catalog(site, product):
-    """ Get course or course_run information from Discovery Service and cache """
-    if product.is_course_entitlement_product:
-        key = product.attr.UUID
-    else:
-        key = CourseKey.from_string(product.attr.course_key)
-
-    api = site.siteconfiguration.discovery_api_client
-    partner_short_code = site.siteconfiguration.partner.short_code
-
-    cache_key = 'courses_api_detail_{}{}'.format(key, partner_short_code)
-    cache_key = hashlib.md5(cache_key).hexdigest()
-    course_cached_response = TieredCache.get_cached_response(cache_key)
-    if course_cached_response.is_hit:
-        return course_cached_response.value
-
-    if product.is_course_entitlement_product:
-        course = api.courses(key).get()
-    else:
-        course = api.course_runs(key).get(partner=partner_short_code)
-
-    TieredCache.set_all_tiers(cache_key, course, settings.COURSES_API_CACHE_TIMEOUT)
+def get_course_info_from_lms(course_key):
+    """ Get course information from LMS via the course api and cache """
+    api = EdxRestApiClient(get_lms_url('api/courses/v1/'))
+    cache_key = 'courses_api_detail_{}'.format(course_key)
+    cache_hash = hashlib.md5(cache_key).hexdigest()
+    course = cache.get(cache_hash)
+    if not course:  # pragma: no cover
+        course = api.courses(course_key).get()
+        cache.set(cache_hash, course, settings.COURSES_API_CACHE_TIMEOUT)
     return course
 
 
