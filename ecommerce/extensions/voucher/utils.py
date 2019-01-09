@@ -12,10 +12,15 @@ import dateutil.parser
 import pytz
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
 from opaque_keys.edx.keys import CourseKey
 from oscar.core.loading import get_model
-from oscar.templatetags.currency_filters import currency
+
+# eduNEXT note: disabling translations for this file to avoid
+# failures generating coupons csv files
+from ecommerce.edunext.utils import disable_translation as _
+# eduNEXT note: using proxy ednx_currency function to avoid unicode results
+# that are unsupported by csv file generator used by ecommerce
+from ecommerce.edunext.utils import ednx_currency as currency
 
 from ecommerce.cache_utils.utils import TieredCache
 from ecommerce.core.url_utils import get_ecommerce_url
