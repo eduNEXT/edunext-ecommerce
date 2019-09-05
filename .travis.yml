@@ -2,11 +2,6 @@ language: python
 python:
   - "2.7"
 
-branches:
-  only:
-    - master
-    - open-release/ironwood.master
-
 sudo: required
 services:
   - docker
