@@ -166,12 +166,17 @@ class BasketSummaryView(BasketView):
 
         try:
             course = get_course_info_from_catalog(self.request.site, product)
-            try:
+            if course.get('image') and 'src' in course['image']:
                 image_url = course['image']['src']
-            except (KeyError, TypeError):
-                image_url = ''
+            elif 'card_image_url' in course:
+                image_url = course['card_image_url']
+            else:
+                try:
+                    image_url = course['media']['image']['raw']
+                except (KeyError, TypeError):
+                    image_url = ''
             short_description = course.get('short_description', '')
-            course_name = course.get('title', '')
+            course_name = course.get('name', '')
 
             # The course start/end dates are not currently used
             # in the default basket templates, but we are adding

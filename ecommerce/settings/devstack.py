@@ -80,6 +80,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SAILTHRU_KEY = 'abc123'
 SAILTHRU_SECRET = 'top_secret'
 
+# Edunext setting_ enabling getting course data from LMS API
+ENABLE_GET_COURSE_INFO_FROM_LMS = True
+
 #####################################################################
 # Lastly, see if the developer has any local overrides.
 if os.path.isfile(join(dirname(abspath(__file__)), 'private.py')):
