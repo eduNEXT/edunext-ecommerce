@@ -162,7 +162,9 @@
                                 {% trans "Checkout with PayPal" %}
                             {% elif processor.NAME == 'payu' %}
                                 {% trans "Checkout with PayU" %}
-                            {% endif %}
+                            {% elif processor.NAME == 'fomopay' %}
+                                {% trans "Checkout with WeChat" %}
+                        {% endif %}
                         </button>
                     {% endfor %}
                 {% endif %}
