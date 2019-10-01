@@ -1,13 +1,13 @@
-""" FOMO Pay payment processing. """
+"""FOMO Pay payment processing."""
 import logging
 import uuid
 from hashlib import sha256
-from urllib import quote as urlencode
 
 from django.conf import settings
+from django.urls import reverse
+from oscar.core.loading import get_class, get_model
 
 from ecommerce.extensions.payment.processors import BasePaymentProcessor
-from oscar.core.loading import get_class, get_model
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +16,7 @@ OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 
 
 class Fomopay(BasePaymentProcessor):
-    """
-    FOMO Pay payment processor (September 2019)
+    """FOMO Pay payment processor (September 2019).
 
     For reference, see
     https://developers.fomopay.com/docs/api/wechat/qr
@@ -41,6 +40,7 @@ class Fomopay(BasePaymentProcessor):
         self.callback_url = configuration['callback_url']
         self.type = configuration['type']
         self.api_key = configuration['api_key']
+        self.api_url = configuration['api_url']
 
     def get_transaction_parameters(self, basket, request=None, use_client_side_checkout=False, **kwargs):
         """
@@ -56,18 +56,18 @@ class Fomopay(BasePaymentProcessor):
         parameters = {
             'merchant': self.merchant,
             'price': str(basket.total_incl_tax),
-            'description': urlencode(self.get_basket_description(basket)),
+            'description': self.get_basket_description(basket),
             'transaction': basket.order_number,
             'callback_url': self.callback_url,
-            'currency_code': basket.currency,
+            'currency_code': basket.currency.lower(),
             'type': self.type,
             'timeout': self.timeout,
             'nonce': uuid.uuid4().hex,
         }
 
         parameters['signature'] = self._generate_signature(parameters)
-        parameters['payment_page_url'] = '/{}'.format(self.NAME)
-
+        parameters['payment_page_url'] = reverse('fomopay:payment')
+        parameters['api_url'] = self.api_url
         return parameters
 
     def handle_processor_response(self, response, basket=None):
@@ -97,10 +97,10 @@ class Fomopay(BasePaymentProcessor):
         for key in sorted(parameters):
             sorted_params.append('{}={}'.format(key, parameters[key]))
 
-        sorted_params = '&'.join(sorted_params)
+        query_str = '&'.join(sorted_params)
+        query_str = '{}&shared_key={}'.format(query_str, self.api_key)
 
-        str_params = '{}&shared_key={}'.format(sorted_params, self.api_key)
-        return sha256(str_params).hexdigest()
+        return sha256(query_str).hexdigest()
 
     @staticmethod
     def get_basket_description(basket):

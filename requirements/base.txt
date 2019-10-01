@@ -120,3 +120,4 @@ unidecode==0.4.21         # via django-oscar
 uritemplate==3.0.0        # via coreapi
 urllib3==1.24.1           # via requests
 zeep==2.1.1
+qrcode==6.1

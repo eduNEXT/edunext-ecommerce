@@ -1,0 +1,30 @@
+{% extends 'edx/base.html' %}
+
+{% load core_extras %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+{% trans 'WeChat Pay' %}
+{% endblock title %}
+
+{% block navbar %}
+    {% include 'edx/partials/_student_navbar.html' %}
+{% endblock navbar %}
+
+{% block content %}
+
+<main id="main-content" aria-label="Checkout" tabindex=-1>
+    <div class="page-header">
+        <h1>WeChat</h1>
+    </div>
+    <!-- Temporal template view -->
+    <img src="data:image/png;base64,{{qrcode}}" alt="QR Code" class="thumbnail">
+
+
+    <div class="well">
+        {% lorem 3 p%}
+    </div>
+</main>
+
+{% endblock content %}

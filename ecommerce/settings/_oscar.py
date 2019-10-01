@@ -145,6 +145,7 @@ PAYMENT_PROCESSOR_CONFIG = {
             'timeout': 3600,
             'callback_url': None,
             'type': 'sale',
+            'api_url': None,
         }
     },
 }
