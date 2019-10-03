@@ -7,6 +7,9 @@ from django.conf import settings
 from django.urls import reverse
 from oscar.core.loading import get_class, get_model
 
+from ecommerce.extensions.payment.exceptions import (
+    InvalidSignatureError,
+)
 from ecommerce.extensions.payment.processors import BasePaymentProcessor
 
 logger = logging.getLogger(__name__)
@@ -71,7 +74,27 @@ class Fomopay(BasePaymentProcessor):
         return parameters
 
     def handle_processor_response(self, response, basket=None):
-        pass
+        """
+        Handle a response (i.e., "merchant notification") from FOMO Pay.
+
+        This method does the following:
+            1. Verify the validity of the response.
+            2. Create PaymentEvents and Sources for successful payments.
+
+        Arguments:
+            response (dict): Dictionary of parameters received from the payment processor.
+
+        Keyword Arguments:
+            basket (Basket): Basket being purchased via the payment processor.
+
+        Raises:
+            TransactionDeclined: Indicates the payment was declined by the processor.
+            GatewayError: Indicates a general error on the part of the processor.
+        """
+
+        # Validate the signature
+        if not self.is_signature_valid(response):
+            raise InvalidSignatureError
 
     def issue_credit(self, order_number, basket, reference_number, amount, currency):
         pass
@@ -101,6 +124,16 @@ class Fomopay(BasePaymentProcessor):
         query_str = '{}&shared_key={}'.format(query_str, self.api_key)
 
         return sha256(query_str).hexdigest()
+
+    def is_signature_valid(self, response):
+        """Returns a boolean indicating if the response's signature (indicating potential tampering) is valid."""
+
+        response_signature = response.pop('signature', None)
+
+        if not response_signature:
+            return False
+
+        return self._generate_signature(response) == response_signature
 
     @staticmethod
     def get_basket_description(basket):
