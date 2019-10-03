@@ -1,16 +1,21 @@
 """FOMO Pay payment processing."""
 import logging
 import uuid
+from decimal import Decimal
 from hashlib import sha256
 
 from django.conf import settings
 from django.urls import reverse
+from oscar.apps.payment.exceptions import GatewayError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
 
 from ecommerce.extensions.payment.exceptions import (
+    AuthorizationError,
+    DuplicateReferenceNumber,
     InvalidSignatureError,
+    PartialAuthorizationError
 )
-from ecommerce.extensions.payment.processors import BasePaymentProcessor
+from ecommerce.extensions.payment.processors import BasePaymentProcessor, HandledProcessorResponse
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +101,40 @@ class Fomopay(BasePaymentProcessor):
         if not self.is_signature_valid(response):
             raise InvalidSignatureError
 
+        # Raise an exception for payments that were not accepted. Consuming code should be responsible for handling
+        # and logging the exception.
+        decision = response['result']
+        if decision != '0':
+            # FOMO Pay is not explicit to say what is the cause of the error,
+            # it is necessary that we make our own checks.
+
+            # Check if the user made a payment request twice for the same order.
+            if Order.objects.filter(number=response['transaction']).exists():
+                raise DuplicateReferenceNumber
+
+            # Raise an exception if the authorized amount differs from the requested amount.
+            if response.get('cash_amount') and response['cash_amount'] != basket.total_incl_tax:
+                raise PartialAuthorizationError
+
+            raise {
+                'cancel': UserCancelled,
+                'decline': TransactionDeclined,
+                'error': GatewayError,
+                'review': AuthorizationError,
+            }.get(decision, InvalidFomoPayDecision)
+
+        currency = response.get('cash_currency', basket.currency)
+        total = Decimal(response.get('cash_amount', basket.total_incl_tax))
+        transaction_id = response.get('payment_id', None)
+
+        return HandledProcessorResponse(
+            transaction_id=transaction_id,
+            total=total,
+            currency=currency,
+            card_type='WeChat QR Payment',
+            card_number='WeChat QR Payment'
+        )
+
     def issue_credit(self, order_number, basket, reference_number, amount, currency):
         pass
 
@@ -150,3 +189,8 @@ class Fomopay(BasePaymentProcessor):
             description.append(line.product.course_id)
 
         return "Seat(s) bought in:{}".format(",".join(description))
+
+
+class InvalidFomoPayDecision(GatewayError):
+    """The decision returned by FOMO Pay was not recognized."""
+    pass
