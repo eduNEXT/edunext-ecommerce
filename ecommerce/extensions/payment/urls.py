@@ -32,6 +32,7 @@ PAYU_URLS = [
 FOMOPAY_URLS = [
     url(r'^notify/$', fomopay.FomopayPaymentResponseView.as_view(), name='notify'),
     url(r'^pay/$', fomopay.FomopayQRView.as_view(), name='payment'),
+    url(r'^status/$', fomopay.FomopayPaymentStatusView.as_view(), name='status')
 ]
 
 SDN_URLS = [

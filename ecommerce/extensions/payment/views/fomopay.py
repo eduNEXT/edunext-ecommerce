@@ -19,6 +19,11 @@ from django.views.generic import View
 from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
+from rest_framework.views import APIView
+from rest_framework import permissions, status
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
@@ -36,6 +41,7 @@ Applicator = get_class('offer.applicator', 'Applicator')
 Basket = get_model('basket', 'Basket')
 BillingAddress = get_model('order', 'BillingAddress')
 Country = get_model('address', 'Country')
+Order = get_model('order', 'Order')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 OrderTotalCalculator = get_class('checkout.calculators', 'OrderTotalCalculator')
 NoShippingRequired = get_class('shipping.methods', 'NoShippingRequired')
@@ -58,13 +64,19 @@ class FomopayQRView(View):
         return super(FomopayQRView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request):
-        """ Render QR Code.
+        """Render QR Code.
 
         Process the incoming request to render the QR in the template.
         """
         qr_url = self._get_qr_link(request)
         qr_img = self._generate_qr(qr_url)
-        context = {'qrcode': qr_img}
+        order_id = request.POST.get('transaction')
+        status_url = reverse('fomopay:status')
+        context = {
+            'qrcode': qr_img,
+            'order_id': order_id,
+            'status_url': status_url,
+            'receipt_page': self._get_receipt_page(order_id)}
 
         return render(request, 'payment/fomopay.html', context)
 
@@ -90,6 +102,40 @@ class FomopayQRView(View):
         qr_url = fomo_response.get('url')
 
         return qr_url
+
+    def _get_receipt_page(self, order_id):
+        """ Get receipt page for given order."""
+        receipt_page_url = get_receipt_page_url(
+            self.request.site.siteconfiguration,
+            order_number=order_id
+        )
+
+        return receipt_page_url
+
+class FomopayPaymentStatusView(APIView):
+    # TODO: implement security to prevent unauthorized access.
+    # permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        """Provide confirmation of payment."""
+        status = self._get_payment_status(request)
+        content = {
+            'status': status
+        }
+
+        return Response(content)
+
+    def _get_payment_status(self, request):
+        """Get the current state of the payment."""
+        order_number = request.query_params.get('order_id')
+
+        try:
+            order = Order.objects.get(number=order_number)
+            status = 'success' if order.status == 'Complete' else 'in progress'
+            return status
+        except:
+            return 'in progress'
+
 
 
 class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
@@ -122,9 +168,6 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
             basket = self.validate_notification(notification)
 
         except DuplicateReferenceNumber:
-            # FOMO Pay has told us that they've declined an attempt to pay
-            # for an existing order. If this happens, we can redirect the browser
-            # to the receipt page for the existing order.
             return self.redirect_to_receipt_page(notification)
         except TransactionDeclined:
             order_number = request.POST.get('transaction')
@@ -156,17 +199,11 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
             order = self.create_order(request, basket, self._get_billing_address(notification))
             self.handle_post_order(order)
 
-            return self.redirect_to_receipt_page(notification)
+            # return self.redirect_to_receipt_page(notification)
         except:  # pylint: disable=bare-except
             return redirect(reverse('payment_error'))
 
-    def redirect_to_receipt_page(self, notification):
-        receipt_page_url = get_receipt_page_url(
-            self.request.site.siteconfiguration,
-            order_number=notification.get('transaction')
-        )
 
-        return redirect(receipt_page_url)
 
     def validate_notification(self, notification):
         """
