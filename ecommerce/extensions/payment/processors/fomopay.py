@@ -4,7 +4,6 @@ import uuid
 from decimal import Decimal
 from hashlib import sha256
 
-from django.conf import settings
 from django.urls import reverse
 from oscar.apps.payment.exceptions import GatewayError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
@@ -135,8 +134,17 @@ class Fomopay(BasePaymentProcessor):
             card_number='WeChat QR Payment'
         )
 
-    def issue_credit(self, order_number, basket, reference_number, amount, currency):
-        pass
+    def issue_credit(self, order_number, basket, reference_number, amount, currency):  # pylint: disable=unused-argument
+        """
+        This method should be implemented in the future in order
+        to accept payment refunds
+        """
+
+        logger.exception(
+            'FOMO Pay processor can not issue credits or refunds',
+        )
+
+        raise NotImplementedError
 
     def _generate_signature(self, parameters):
         """

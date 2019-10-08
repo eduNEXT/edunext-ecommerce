@@ -6,22 +6,16 @@ import StringIO
 
 import qrcode
 import requests
-from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
-from rest_framework.views import APIView
-from rest_framework import permissions, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -68,17 +62,25 @@ class FomopayQRView(View):
 
         Process the incoming request to render the QR in the template.
         """
-        qr_url = self._get_qr_link(request)
-        qr_img = self._generate_qr(qr_url)
-        order_id = request.POST.get('transaction')
-        status_url = reverse('fomopay:status')
-        context = {
-            'qrcode': qr_img,
-            'order_id': order_id,
-            'status_url': status_url,
-            'receipt_page': self._get_receipt_page(order_id)}
+        try:
+            qr_url = self._get_qr_link(request)
+            qr_img = self._generate_qr(qr_url)
+            order_id = request.POST.get('transaction')
+            status_url = reverse('fomopay:status')
 
-        return render(request, 'payment/fomopay.html', context)
+            context = {
+                'qrcode': qr_img,
+                'order_id': order_id,
+                'status_url': status_url,
+                'receipt_page': self._get_receipt_page(order_id),
+                'error_page': reverse('payment_error'),
+            }
+
+            return render(request, 'payment/fomopay.html', context)
+        except:  # pylint: disable=bare-except
+            logger.error('FOMO Pay QR Code generation failed for request[%s].',
+                         request.POST.dict())
+            return redirect(reverse('payment_error'))
 
     def _generate_qr(self, qr_url):
         """
@@ -101,6 +103,9 @@ class FomopayQRView(View):
         fomo_response = response.json()
         qr_url = fomo_response.get('url')
 
+        if not qr_url:
+            raise PaymentError
+
         return qr_url
 
     def _get_receipt_page(self, order_id):
@@ -112,9 +117,14 @@ class FomopayQRView(View):
 
         return receipt_page_url
 
+
 class FomopayPaymentStatusView(APIView):
+    """Polls payment status.
+
+    Return the current status of the payment by polling the order
+    or the basket status.
+    """
     # TODO: implement security to prevent unauthorized access.
-    # permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         """Provide confirmation of payment."""
@@ -131,14 +141,31 @@ class FomopayPaymentStatusView(APIView):
 
         try:
             order = Order.objects.get(number=order_number)
-            status = 'success' if order.status == 'Complete' else 'in progress'
-            return status
-        except:
+
+            if order.status == 'Complete':
+                return 'success'
+
+        except:  # pylint: disable=bare-except
+            logger.info(
+                'Polling WeChat Payment: No payment found for order [%s] ',
+                order_number,
+            )
+
+        try:
+            basket_id = OrderNumberGenerator().basket_id(order_number)
+            basket = Basket.objects.get(id=basket_id)
+
+            if basket.status == 'CLOSED':
+                logger.info(
+                    'Polling WeChat Payment: Basket closed for order [%s] ',
+                    order_number,
+                )
+                return 'error'
+        except:  # pylint: disable=bare-except
             return 'in progress'
 
 
-
-class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
+class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
     """ Starts FOMO Pay payment process.
 
     This view is intended to be called asynchronously by the payment processor.
@@ -166,44 +193,29 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
         try:
             notification = request.POST.dict()
             basket = self.validate_notification(notification)
-
-        except DuplicateReferenceNumber:
-            return self.redirect_to_receipt_page(notification)
-        except TransactionDeclined:
-            order_number = request.POST.get('transaction')
-            old_basket_id = OrderNumberGenerator().basket_id(order_number)
-            old_basket = Basket.objects.get(id=old_basket_id)
-
-            new_basket = Basket.objects.create(owner=old_basket.owner, site=request.site)
-
-            # We intentionally avoid thawing the old basket here to prevent order
-            # numbers from being reused. For more, refer to commit a1efc68.
-            new_basket.merge(old_basket, add_quantities=False)
-
-            message = _(
-                'An error occurred while processing your payment. You have not been charged. '
-                'Please double-check your WeChat app and try again. '
-                'For help, {link_start}contact support{link_end}.'
-            ).format(
-                link_start='<a href="{}">'.format(request.site.siteconfiguration.payment_support_url),
-                link_end='</a>',
-            )
-
-            messages.error(request, mark_safe(message))
-
-            return redirect(reverse('basket:summary'))
         except:  # pylint: disable=bare-except
-            return redirect(reverse('payment_error'))
+            self._close_basket(request)
+            return Response(status=200)
 
         try:
             order = self.create_order(request, basket, self._get_billing_address(notification))
             self.handle_post_order(order)
 
-            # return self.redirect_to_receipt_page(notification)
+            return Response(status=200)
         except:  # pylint: disable=bare-except
-            return redirect(reverse('payment_error'))
+            self._close_basket(request)
+            return Response(status=200)
 
-
+    def _close_basket(self, request):
+        """
+        Change status of basket to CLOSED to indicate there was an error
+        when processing the payment.
+        """
+        order_number = request.POST.get('transaction')
+        basket_id = OrderNumberGenerator().basket_id(order_number)
+        basket = Basket.objects.get(id=basket_id)
+        basket.status = 'CLOSED'
+        basket.save()
 
     def validate_notification(self, notification):
         """
@@ -254,13 +266,15 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
                 self.handle_payment(notification, basket)
             except InvalidSignatureError:
                 logger.exception(
-                    'Received an invalid FOMO Pay response. The payment response was recorded in entry [%d].',
+                    'Received an invalid signature in the FOMO Pay response for basket [%d] .'
+                    'The payment response was recorded in entry [%d].',
+                    basket.id,
                     ppr.id
                 )
                 raise
             except (UserCancelled, TransactionDeclined) as exception:
                 logger.info(
-                    'FOMO Pay payment [%d] did not complete for basket [%d] because [%s]. '
+                    'FOMO Pay payment did not complete for basket [%d] because [%s]. '
                     'The payment response [%s] was recorded in entry [%d].',
                     basket.id,
                     exception.__class__.__name__,
@@ -348,7 +362,6 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, View):
         """ Fill in the billing address using the payment notification.
 
         FOMO Pay doesn't provide a billing address in the payment notification,
-        and by the e-commerce platform design this field can't be None nor empty,
         so as a temporal address we're storing the payment id.
         """
         return BillingAddress(

@@ -52,8 +52,14 @@
         <svg id="spinner" class="center-block" width="100" height="100">
         </svg>
 
-        <a id="continue" href="{{receipt_page}}" class="btn btn-success checkout-button center-block" style="display: none">
-            {% trans "Continue" %}
+        <a id="continue" href="{{receipt_page}}" class="btn btn-success checkout-button center-block"
+            style="display: none">
+            {% trans "Payment completed. Continue to the receipt page!" %}
+        </a>
+
+        <a id="error" href="{{error_page}}" class="btn btn-danger checkout-button center-block"
+            style="display: none">
+            {% trans "There was an error while processing your payment, continue" %}
         </a>
 
     </div>

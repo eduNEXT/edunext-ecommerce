@@ -18,12 +18,14 @@ require([
         function poll() {
             $.get(url, { order_id: order_id })
                 .done(function (data) {
-                    console.log(data);
-                    if (data['status'] !== 'success') {
-                        setTimeout(poll, 10000);
-                    } else {
+                    if (data['status'] == 'success') {
                         Spinner.hide();
                         $('#continue').css( "display", "block" )
+                    } else if (data['status'] == 'error') {
+                        Spinner.hide();
+                        $('#error').css( "display", "block" )
+                    } else {
+                        setTimeout(poll, 10000);
                     }
                 });
         }
