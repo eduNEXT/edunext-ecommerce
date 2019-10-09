@@ -30,6 +30,7 @@ class Fomopay(BasePaymentProcessor):
     """
 
     NAME = 'fomopay'
+    PAYMENT_APPROVED = '0'
 
     def __init__(self, site):
         """
@@ -103,7 +104,7 @@ class Fomopay(BasePaymentProcessor):
         # Raise an exception for payments that were not accepted. Consuming code should be responsible for handling
         # and logging the exception.
         decision = response['result']
-        if decision != '0':
+        if decision != self.PAYMENT_APPROVED:
             # FOMO Pay is not explicit to say what is the cause of the error,
             # it is necessary that we make our own checks.
 
