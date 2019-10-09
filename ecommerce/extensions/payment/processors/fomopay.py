@@ -131,7 +131,7 @@ class Fomopay(BasePaymentProcessor):
             total=total,
             currency=currency,
             card_type='WeChat QR Payment',
-            card_number='WeChat QR Payment'
+            card_number='.'
         )
 
     def issue_credit(self, order_number, basket, reference_number, amount, currency):  # pylint: disable=unused-argument

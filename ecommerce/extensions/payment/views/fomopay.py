@@ -6,6 +6,7 @@ import StringIO
 
 import qrcode
 import requests
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.shortcuts import redirect, render
@@ -16,6 +17,7 @@ from django.views.generic import View
 from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -41,12 +43,14 @@ OrderTotalCalculator = get_class('checkout.calculators', 'OrderTotalCalculator')
 NoShippingRequired = get_class('shipping.methods', 'NoShippingRequired')
 
 
-class FomopayQRView(View):
+class FomopayQRView(LoginRequiredMixin, View):
     """Starts FOMO Pay payment process.
 
     This view acts as an interface between the user and FOMO Pay,
     it'll mainly display the QR code and instructions on how to make a payment with the WeChat app.
     """
+    # PermissionDenied exception will be raised instead of the redirect to login.
+    raise_exception = True
 
     # Disable CSRF validation. The internal POST requests to render this view
     # don't include the CSRF token as hosted-side payment processor are
@@ -118,13 +122,28 @@ class FomopayQRView(View):
         return receipt_page_url
 
 
+class IsBasketOwner(BasePermission):
+    """
+    Global permission to only allow owners of an order/basket to poll it.
+    """
+    def has_permission(self, request, view):
+        try:
+            order_number = request.query_params.get('order_id')
+            basket_id = OrderNumberGenerator().basket_id(order_number)
+            basket = Basket.objects.get(id=basket_id)
+            user = request.user
+            return basket.owner == user
+        except:  # pylint: disable=bare-except
+            return False
+
+
 class FomopayPaymentStatusView(APIView):
     """Polls payment status.
 
     Return the current status of the payment by polling the order
     or the basket status.
     """
-    # TODO: implement security to prevent unauthorized access.
+    permission_classes = [IsAuthenticated, IsBasketOwner]
 
     def get(self, request):
         """Provide confirmation of payment."""
@@ -198,7 +217,7 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
             return Response(status=200)
 
         try:
-            order = self.create_order(request, basket, self._get_billing_address(notification))
+            order = self.create_order(request, basket, self._get_billing_address(basket))
             self.handle_post_order(order)
 
             return Response(status=200)
@@ -358,18 +377,16 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
             self.log_order_placement_exception(order_number, basket.id)
             raise
 
-    def _get_billing_address(self, fomopay_response):
+    def _get_billing_address(self, basket):
         """ Fill in the billing address using the payment notification.
 
         FOMO Pay doesn't provide a billing address in the payment notification,
-        so as a temporal address we're storing the payment id.
+        so as a temporal address we're storing the basket owner information.
         """
         return BillingAddress(
-            first_name='N/A',
-            last_name='N/A',
-            line1=fomopay_response['payment_id'],
-
-            # Oscar uses line4 for city
-            line4=fomopay_response['payment_id'],
+            first_name=basket.owner.full_name,
+            last_name='',
+            line1=basket.owner.email,
+            line4='',
             country=Country.objects.get(
                 iso_3166_1_a2='SG'))
