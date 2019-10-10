@@ -21,6 +21,7 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from ecommerce.edunext.conf import settings
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.exceptions import (
@@ -52,6 +53,11 @@ class FomopayQRView(LoginRequiredMixin, View):
     # PermissionDenied exception will be raised instead of the redirect to login.
     raise_exception = True
 
+    def __init__(self):
+        super(FomopayQRView, self).__init__()
+        site_settings = settings.get_current_request_site_options()
+        self.debug = True if site_settings.get('FOMOPAY_DEBUG') == 'True' else False
+
     # Disable CSRF validation. The internal POST requests to render this view
     # don't include the CSRF token as hosted-side payment processor are
     # excepted to be externally hosted, but this is not the case.
@@ -69,7 +75,7 @@ class FomopayQRView(LoginRequiredMixin, View):
         try:
             qr_url = self._get_qr_link(request)
             qr_img = self._generate_qr(qr_url)
-            order_id = request.POST.get('transaction')
+            order_id = FomopayPaymentResponseView.get_transaction_id(request=request)
             status_url = reverse('fomopay:status')
 
             context = {
@@ -81,9 +87,8 @@ class FomopayQRView(LoginRequiredMixin, View):
             }
 
             return render(request, 'payment/fomopay.html', context)
-        except:  # pylint: disable=bare-except
-            logger.error('FOMO Pay QR Code generation failed for request[%s].',
-                         request.POST.dict())
+        except Exception as err:  # pylint: disable=broad-except
+            logger.error('FOMO Pay QR Code failed with error [%s]', str(err))
             return redirect(reverse('payment_error'))
 
     def _generate_qr(self, qr_url):
@@ -107,7 +112,18 @@ class FomopayQRView(LoginRequiredMixin, View):
         fomo_response = response.json()
         qr_url = fomo_response.get('url')
 
+        if self.debug:
+            logger.info('Outgoing FOMO Pay QR Code POST request with data: [%s],'
+                        'FOMO Pay response: [%s]',
+                        request.POST.dict(),
+                        response.content)
+
         if not qr_url:
+            logger.error('FOMO Pay QR Code generation failed for request[%s].'
+                         'with FOMO Pay response [%s]',
+                         request.POST.dict(),
+                         response.content)
+
             raise PaymentError
 
         return qr_url
@@ -145,12 +161,30 @@ class FomopayPaymentStatusView(APIView):
     """
     permission_classes = [IsAuthenticated, IsBasketOwner]
 
+    def __init__(self):
+        super(FomopayPaymentStatusView, self).__init__()
+        site_settings = settings.get_current_request_site_options()
+        self.debug = True if site_settings.get('FOMOPAY_DEBUG') == 'True' else False
+
     def get(self, request):
         """Provide confirmation of payment."""
+        if self.debug:
+            logger.info(
+                'Incoming FOMO Pay Payment status poll GET request with data: [%s]',
+                request.query_params,
+            )
         status = self._get_payment_status(request)
         content = {
             'status': status
         }
+
+        if self.debug:
+            logger.info(
+                'Incoming FOMO Pay Payment status poll GET request with data: [%s],'
+                'response: [%s]',
+                request.query_params,
+                content,
+            )
 
         return Response(content)
 
@@ -192,6 +226,11 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
     to complete the fulfillment pipeline.
     """
 
+    def __init__(self):
+        super(FomopayPaymentResponseView, self).__init__()
+        site_settings = settings.get_current_request_site_options()
+        self.debug = True if site_settings.get('FOMOPAY_DEBUG') == 'True' else False
+
     # Disable atomicity for the view. Otherwise, we'd be unable to commit to the database
     # until the request had concluded; Django will refuse to commit when an atomic() block
     # is active, since that would break atomicity. Without an order present in the database
@@ -209,6 +248,12 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
         """
         Process a FOMO Pay merchant notification and place an order for paid products as appropriate.
         """
+        if self.debug:
+            logger.info(
+                'Incoming FOMO Pay Payment notification POST request with data: [%s]',
+                request.POST.dict(),
+            )
+
         try:
             notification = request.POST.dict()
             basket = self.validate_notification(notification)
@@ -220,17 +265,46 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
             order = self.create_order(request, basket, self._get_billing_address(basket))
             self.handle_post_order(order)
 
+            if self.debug:
+                logger.info(
+                    'Incoming FOMO Pay Payment notification POST request with data: [%s]'
+                    'result: ORDER PLACED',
+                    request.POST.dict()
+                )
+
             return Response(status=200)
-        except:  # pylint: disable=bare-except
+        except Exception as err:  # pylint: disable=broad-except
             self._close_basket(request)
+
+            if self.debug:
+                logger.info(
+                    'Incoming FOMO Pay Payment notification POST request with data: [%s],'
+                    'result: BASKET CLOSED, the placement process failed'
+                    'error: [%s]',
+                    request.POST.dict(),
+                    str(err)
+                )
             return Response(status=200)
+
+    @staticmethod
+    def get_transaction_id(request=None, notification=None):
+        """Obtain the transaction id by removing the nonce."""
+        if request:
+            params = request.POST.dict()
+        elif notification:
+            params = notification
+
+        if '$' in params.get('transaction'):
+            return params['transaction'].split('$')[1]
+
+        raise InvalidBasketError
 
     def _close_basket(self, request):
         """
         Change status of basket to CLOSED to indicate there was an error
         when processing the payment.
         """
-        order_number = request.POST.get('transaction')
+        order_number = self.get_transaction_id(request=request)
         basket_id = OrderNumberGenerator().basket_id(order_number)
         basket = Basket.objects.get(id=basket_id)
         basket.status = 'CLOSED'
@@ -250,7 +324,7 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
             # The transaction id refers to the ID generated by FOMO Pay
             transaction_id = notification.get('payment_id')
             # FOMO Pay uses the transaction field as the reference code or order number
-            order_number = notification.get('transaction')
+            order_number = self.get_transaction_id(notification=notification)
             basket_id = OrderNumberGenerator().basket_id(order_number)
 
             logger.info(

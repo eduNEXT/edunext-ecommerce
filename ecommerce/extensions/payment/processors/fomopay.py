@@ -60,17 +60,19 @@ class Fomopay(BasePaymentProcessor):
         Returns:
             dict: Payment processor-specific parameters required to complete a transaction.
         """
+        nonce = uuid.uuid4().hex
+        transaction = '{}${}'.format(nonce, basket.order_number)
 
         parameters = {
             'merchant': self.merchant,
             'price': str(basket.total_incl_tax),
             'description': self.get_basket_description(basket),
-            'transaction': basket.order_number,
+            'transaction': transaction,
             'callback_url': self.callback_url,
             'currency_code': basket.currency.lower(),
             'type': self.type,
             'timeout': self.timeout,
-            'nonce': uuid.uuid4().hex,
+            'nonce': nonce,
         }
 
         parameters['signature'] = self._generate_signature(parameters)
