@@ -18,6 +18,7 @@ from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError, TransactionDeclined, UserCancelled
 from oscar.core.loading import get_class, get_model
 from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -160,6 +161,7 @@ class FomopayPaymentStatusView(APIView):
     or the basket status.
     """
     permission_classes = [IsAuthenticated, IsBasketOwner]
+    renderer_classes = [JSONRenderer]
 
     def __init__(self):
         super(FomopayPaymentStatusView, self).__init__()
@@ -225,6 +227,7 @@ class FomopayPaymentResponseView(EdxOrderPlacementMixin, APIView):
     The view expects POST data containing a transaction ID and the payment result
     to complete the fulfillment pipeline.
     """
+    renderer_classes = [JSONRenderer]
 
     def __init__(self):
         super(FomopayPaymentResponseView, self).__init__()
