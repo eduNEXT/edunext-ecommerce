@@ -1,6 +1,14 @@
 from django.conf.urls import include, url
 
-from ecommerce.extensions.payment.views import PaymentFailedView, SDNFailure, cybersource, paypal, payu, stripe
+from ecommerce.extensions.payment.views import (
+    PaymentFailedView,
+    SDNFailure,
+    cybersource,
+    fomopay,
+    paypal,
+    payu,
+    stripe
+)
 
 CYBERSOURCE_APPLE_PAY_URLS = [
     url(r'^authorize/$', cybersource.CybersourceApplePayAuthorizationView.as_view(), name='authorize'),
@@ -21,6 +29,12 @@ PAYU_URLS = [
     url(r'^notify/$', payu.PayUPaymentResponseView.as_view(), name='notify'),
 ]
 
+FOMOPAY_URLS = [
+    url(r'^notify/$', fomopay.FomopayPaymentResponseView.as_view(), name='notify'),
+    url(r'^pay/$', fomopay.FomopayQRView.as_view(), name='payment'),
+    url(r'^status/$', fomopay.FomopayPaymentStatusView.as_view(), name='status')
+]
+
 SDN_URLS = [
     url(r'^failure/$', SDNFailure.as_view(), name='failure'),
 ]
@@ -36,4 +50,5 @@ urlpatterns = [
     url(r'^payu/', include(PAYU_URLS, namespace='payu')),
     url(r'^sdn/', include(SDN_URLS, namespace='sdn')),
     url(r'^stripe/', include(STRIPE_URLS, namespace='stripe')),
+    url(r'^wechat/', include(FOMOPAY_URLS, namespace='fomopay')),
 ]

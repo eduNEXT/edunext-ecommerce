@@ -97,6 +97,7 @@ python-dateutil==2.8.0
 python-openid==2.2.5      # via social-auth-core
 pytz==2016.10
 pyyaml==3.13              # via edx-django-release-util
+qrcode==6.1
 rcssmin==1.0.6            # via django-compressor
 requests-oauthlib==1.2.0  # via social-auth-core
 requests-toolbelt==0.9.1  # via zeep
@@ -120,3 +121,4 @@ unidecode==0.4.21         # via django-oscar
 uritemplate==3.0.0        # via coreapi
 urllib3==1.24.1           # via requests
 zeep==2.1.1
+qrcode==6.1

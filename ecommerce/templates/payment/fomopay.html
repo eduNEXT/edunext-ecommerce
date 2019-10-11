@@ -1,0 +1,68 @@
+{% extends 'edx/base.html' %}
+
+{% load core_extras %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+{% trans 'WeChat Pay' %}
+{% endblock title %}
+
+{% block navbar %}
+{% include 'edx/partials/_student_navbar.html' %}
+{% endblock navbar %}
+
+{% block post_js %}
+<script type="text/javascript">
+    window.PaymentConfig = {
+        order_id: '{{ order_id }}',
+        status_url: '{{ status_url }}'
+    }
+</script>
+<script src="{% static 'js/payment_processors/fomopay.js' %}" type="text/javascript"></script>
+{% endblock %}
+
+{% block content %}
+
+<main id="main-content" aria-label="Checkout" tabindex=-1>
+    <div class="container">
+        <div class="page-header">
+
+            <h1> <img class="navbar-brand-logo" alt="WeChat logo" src="{% static 'images/WeChat_APP_Icon.png' %}" />
+                WeChat</h1>
+        </div>
+
+        <img src="data:image/png;base64,{{qrcode}}" class="img-responsive thumbnail center-block" alt="QR Code">
+
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h2 class="panel-title">{% trans 'Instructions' %}</h2>
+            </div>
+            <div class="panel-body">
+                <ul>
+                    <li>{% trans 'Open your WeChat App.' %}</li>
+                    <li>{% trans 'Go to "Scan QR Code" in your WeChat.' %}</li>
+                    <li>{% trans 'Complete the payment process.' %}</li>
+                </ul>
+            </div>
+        </div>
+
+        <label id="label-spinner" for="spinner">Waiting for payment...</label>
+        <svg id="spinner" class="center-block" width="100" height="100">
+        </svg>
+
+        <a id="continue" href="{{receipt_page}}" class="btn btn-success checkout-button center-block"
+            style="display: none">
+            {% trans "Payment completed. Continue to the receipt page!" %}
+        </a>
+
+        <a id="error" href="{{error_page}}" class="btn btn-danger checkout-button center-block"
+            style="display: none">
+            {% trans "There was an error while processing your payment, continue" %}
+        </a>
+
+    </div>
+</main>
+
+{% endblock content %}
