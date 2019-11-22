@@ -12,7 +12,6 @@ appdirs==1.4.3            # via zeep
 asn1crypto==0.24.0        # via cryptography
 astroid==1.4.9            # via pylint
 babel==2.6.0              # via django-oscar, django-phonenumber-field, sphinx
-backports.functools-lru-cache==1.5  # via pylint, soupsieve
 beautifulsoup4==4.7.1     # via webtest
 billiard==3.3.0.23        # via celery
 cached-property==1.5.1    # via zeep
@@ -20,7 +19,6 @@ celery==3.1.26.post2      # via edx-ecommerce-worker
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography
 chardet==3.0.4            # via requests
-configparser==3.7.3       # via pylint
 cookies==2.2.1            # via responses
 coreapi==2.3.3
 coreschema==0.0.4         # via coreapi
@@ -29,7 +27,7 @@ cryptography==2.6.1       # via pyopenssl
 cssselect==1.0.3          # via premailer
 cssutils==1.0.2           # via premailer
 ddt==1.1.1
-defusedxml==0.5.0         # via zeep
+defusedxml==0.5.0         # via python3-openid, social-auth-core, zeep
 diff-cover==0.9.6
 django-appconf==1.0.3     # via django-compressor
 django-compressor==2.2
@@ -51,7 +49,7 @@ django-treebeard==4.3     # via django-oscar
 django-waffle==0.14.0
 django-webtest==1.9.2
 django-widget-tweaks==1.4.3  # via django-oscar
-django==1.11.15
+django==1.11.23
 django_extensions==1.9.9
 djangorestframework-csv==2.1.0
 djangorestframework-jwt==1.11.0
@@ -68,11 +66,9 @@ edx-i18n-tools==0.4.8
 edx-opaque-keys==0.4.4
 edx-rest-api-client==1.9.2
 edx-sphinx-theme==1.0.2
-enum34==1.1.6             # via cryptography
 factory-boy==2.8.1
 faker==1.0.2              # via factory-boy
 freezegun==0.3.7
-funcsigs==1.0.2           # via mock
 future==0.17.1            # via pyjwkest
 gevent==1.0.2
 greenlet==0.4.15          # via gevent
@@ -80,7 +76,6 @@ httpretty==0.8.14
 idna==2.8                 # via requests
 imagesize==1.1.0          # via sphinx
 inflect==2.1.0            # via jinja2-pluralize
-ipaddress==1.0.22         # via cryptography, faker
 isodate==0.6.0            # via zeep
 isort==4.2.5
 itypes==1.1.0             # via coreapi
@@ -125,7 +120,7 @@ pylint==1.6.4
 pymongo==3.7.2            # via edx-opaque-keys
 pyopenssl==19.0.0         # via ndg-httpsclient, paypalrestsdk
 python-dateutil==2.8.0
-python-openid==2.2.5      # via social-auth-core
+python3-openid==3.1.0     # via social-auth-core
 pytz==2016.10
 pyyaml==3.13              # via edx-django-release-util, edx-i18n-tools
 qrcode==6.1

@@ -21,7 +21,7 @@ coreschema==0.0.4         # via coreapi
 cryptography==2.6.1       # via pyopenssl
 cssselect==1.0.3          # via premailer
 cssutils==1.0.2           # via premailer
-defusedxml==0.5.0         # via zeep
+defusedxml==0.5.0         # via python3-openid, social-auth-core, zeep
 django-appconf==1.0.3     # via django-compressor
 django-compressor==2.2
 django-cors-headers==2.5.0
@@ -39,7 +39,7 @@ django-threadlocals==0.10
 django-treebeard==4.3     # via django-oscar
 django-waffle==0.14.0
 django-widget-tweaks==1.4.3  # via django-oscar
-django==1.11.15
+django==1.11.23
 django_extensions==1.9.9
 djangorestframework-csv==2.1.0
 djangorestframework-jwt==1.11.0
@@ -53,15 +53,12 @@ edx-drf-extensions==2.0.1
 edx-ecommerce-worker==0.7.2
 edx-opaque-keys==0.4.4
 edx-rest-api-client==1.9.2
-enum34==1.1.6             # via cryptography
 factory-boy==2.11.1       # via django-oscar
 faker==1.0.2              # via factory-boy
-funcsigs==1.0.2           # via mock
 future==0.17.1            # via pyjwkest
 gevent==1.0.2
 greenlet==0.4.15          # via gevent
 idna==2.8                 # via requests
-ipaddress==1.0.22         # via cryptography, faker
 isodate==0.6.0            # via zeep
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
@@ -94,7 +91,7 @@ pyjwt==1.7.1              # via djangorestframework-jwt, edx-auth-backends, edx-
 pymongo==3.7.2            # via edx-opaque-keys
 pyopenssl==19.0.0         # via ndg-httpsclient, paypalrestsdk
 python-dateutil==2.8.0
-python-openid==2.2.5      # via social-auth-core
+python3-openid==3.1.0     # via social-auth-core
 pytz==2016.10
 pyyaml==3.13              # via edx-django-release-util
 qrcode==6.1
@@ -121,4 +118,3 @@ unidecode==0.4.21         # via django-oscar
 uritemplate==3.0.0        # via coreapi
 urllib3==1.24.1           # via requests
 zeep==2.1.1
-qrcode==6.1
