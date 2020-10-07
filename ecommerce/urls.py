@@ -1,6 +1,5 @@
 import os
 
-from auth_backends.urls import auth_urlpatterns
 from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static
@@ -15,6 +14,7 @@ from rest_framework_swagger.views import get_swagger_view
 from ecommerce.core import views as core_views
 from ecommerce.core.url_utils import get_lms_dashboard_url
 from ecommerce.core.views import LogoutView
+from ecommerce.extensions.customer.app import EdxOAuth2LoginView
 from ecommerce.extensions.payment.views.apple_pay import ApplePayMerchantDomainAssociationView
 from ecommerce.extensions.urls import urlpatterns as extensions_patterns
 
@@ -41,9 +41,15 @@ admin.autodiscover()
 admin.site.site_header = _('E-Commerce Service Administration')
 admin.site.site_title = admin.site.site_header
 
+oauth2_urlpatterns = [  # pylint: disable=invalid-name
+    url(r'^login/$', EdxOAuth2LoginView.as_view(), name='login'),
+    url(r'^logout/$', LogoutView.as_view(), name='logout'),
+    url('', include('social_django.urls', namespace='social')),
+]
+
 # NOTE 1: Add our logout override first to ensure it is registered by Django as the actual logout view.
 # NOTE 2: These same patterns are used for rest_framework's browseable API authentication links.
-AUTH_URLS = [url(r'^logout/$', LogoutView.as_view(), name='logout'), ] + auth_urlpatterns
+AUTH_URLS = [url(r'^logout/$', LogoutView.as_view(), name='logout'), ] + oauth2_urlpatterns
 
 WELL_KNOWN_URLS = [
     url(r'^.well-known/apple-developer-merchantid-domain-association.txt$',

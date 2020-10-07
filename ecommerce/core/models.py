@@ -379,8 +379,14 @@ class SiteConfiguration(models.Model):
         url = '{root}/access_token'.format(root=self.oauth2_provider_url)
         access_token, expiration_datetime = EdxRestApiClient.get_oauth_access_token(
             url,
-            self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_KEY'],  # pylint: disable=unsubscriptable-object
-            self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_SECRET'],  # pylint: disable=unsubscriptable-object
+            self.oauth_settings.get(  # pylint: disable=unsubscriptable-object
+                'BACKEND_SERVICE_EDX_OAUTH2_KEY',
+                self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_KEY'],
+            ),
+            self.oauth_settings.get(  # pylint: disable=unsubscriptable-object
+                'BACKEND_SERVICE_EDX_OAUTH2_SECRET',
+                self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_SECRET'],
+            ),
             token_type='jwt'
         )
 
@@ -470,7 +476,7 @@ class SiteConfiguration(models.Model):
 
 
 class User(AbstractUser):
-    """Custom user model for use with OIDC."""
+    """Custom user model for use with python-social-auth via edx-auth-backends."""
 
     full_name = models.CharField(_('Full Name'), max_length=255, blank=True, null=True)
 
