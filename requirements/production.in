@@ -11,7 +11,7 @@ gunicorn==19.7.1
 MySQL-python==1.2.5
 newrelic<5
 python-memcached==1.58
-PyYAML==3.13
+PyYAML==5.1
 nodeenv==1.1.1
 redis==2.10.6
 qrcode==6.1
