@@ -9,7 +9,7 @@ babel==2.6.0              # via sphinx
 certifi==2018.11.29       # via requests
 chardet==3.0.4            # via requests
 docutils==0.14            # via sphinx
-edx-sphinx-theme==1.0.2
+edx-sphinx-theme==1.0.2   # via -r docs.in
 idna==2.8                 # via requests
 imagesize==1.1.0          # via sphinx
 jinja2==2.10              # via sphinx
@@ -19,5 +19,5 @@ pytz==2018.9              # via babel
 requests==2.21.0          # via sphinx
 six==1.12.0               # via edx-sphinx-theme, sphinx
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.5.3
-urllib3==1.24.1           # via requests
+sphinx==1.5.3             # via -r docs.in, edx-sphinx-theme
+urllib3==1.24.2           # via requests
