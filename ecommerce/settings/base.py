@@ -237,6 +237,8 @@ MIDDLEWARE_CLASSES = (
 )
 # END MIDDLEWARE CONFIGURATION
 
+# Django crum middleware
+MIDDLEWARE_CLASSES += ('crum.CurrentRequestUserMiddleware',)
 
 # URL CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
@@ -433,11 +435,22 @@ ENABLE_AUTO_AUTH = False
 # If it were not set, we would be unable to automatically remove all auto-auth users.
 AUTO_AUTH_USERNAME_PREFIX = 'AUTO_AUTH_'
 
-AUTHENTICATION_BACKENDS = ('auth_backends.backends.EdXOpenIdConnect',) + AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = ('auth_backends.backends.EdXOAuth2',) + AUTHENTICATION_BACKENDS
+
+# NOTE: This old auth backend is retained as a temporary fallback in order to
+# support old browser sessions that were established using OIDC.  After a few
+# days, we should be safe to remove this line, along with deleting the rest of
+# the OIDC/DOP settings and keys in the ecommerce site configurations.
+AUTHENTICATION_BACKENDS += ('auth_backends.backends.EdXOpenIdConnect',)
 
 SOCIAL_AUTH_STRATEGY = 'ecommerce.social_auth.strategies.CurrentSiteDjangoStrategy'
 
-# Set these to the correct values for your OAuth2/OpenID Connect provider
+# Set these to the correct values for your OAuth2 provider
+SOCIAL_AUTH_EDX_OAUTH2_KEY = None
+SOCIAL_AUTH_EDX_OAUTH2_SECRET = None
+SOCIAL_AUTH_EDX_OAUTH2_URL_ROOT = None
+SOCIAL_AUTH_EDX_OAUTH2_LOGOUT_URL = None
+
 SOCIAL_AUTH_EDX_OIDC_KEY = None
 SOCIAL_AUTH_EDX_OIDC_SECRET = None
 SOCIAL_AUTH_EDX_OIDC_URL_ROOT = None
@@ -652,4 +665,3 @@ OFFER_ASSIGNMENT_EMAIL_DEFAULT_SUBJECT = 'New edX course assignment'
 #SAILTHRU settings
 SAILTHRU_KEY = None
 SAILTHRU_SECRET = None
-

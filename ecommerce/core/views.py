@@ -2,7 +2,8 @@
 import logging
 import uuid
 
-from auth_backends.views import EdxOpenIdConnectLogoutView
+from auth_backends.views import LogoutRedirectBaseView
+from crum import get_current_request
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
@@ -105,8 +106,16 @@ class StaffOnlyMixin(object):
         return super(StaffOnlyMixin, self).dispatch(request, *args, **kwargs)
 
 
-class LogoutView(EdxOpenIdConnectLogoutView):
+class LogoutView(LogoutRedirectBaseView):
     """ Logout view that redirects the user to the LMS logout page. """
+
+    @property
+    def auth_backend_name(self):
+        request = get_current_request()
+        if request.site.siteconfiguration.oauth_settings.get('BACKEND_SERVICE_EDX_OAUTH2_KEY'):
+            return 'edx-oauth2'
+
+        return 'edx-oidc'
 
     def get_redirect_url(self, *args, **kwargs):
         return self.request.site.siteconfiguration.build_lms_url('logout')

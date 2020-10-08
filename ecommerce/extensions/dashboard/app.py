@@ -1,13 +1,18 @@
-from auth_backends.urls import auth_urlpatterns
 from django.conf.urls import include, url
+from ecommerce.core.views import LogoutView
+from ecommerce.extensions.customer.app import EdxOAuth2LoginView
 from oscar.apps.dashboard import app
 from oscar.core.loading import get_class
 
-from ecommerce.core.views import LogoutView
+oauth2_urlpatterns = [  # pylint: disable=invalid-name
+    url(r'^login/$', EdxOAuth2LoginView.as_view(), name='login'),
+    url(r'^logout/$', LogoutView.as_view(), name='logout'),
+    url('', include('social_django.urls', namespace='social')),
+]
 
-# NOTE: This should match AUTH_URLS in ecommerce/urls.py. These are duplicated here because Oscar's
-# dashboard templates, strangely, reference dashboard:login and dashboard:logout instead of login and logout.
-AUTH_URLS = [url(r'^logout/$', LogoutView.as_view(), name='logout'), ] + auth_urlpatterns
+# Note: Add ecommerce's logout override first to ensure it is registered by Django as the
+# actual logout view. Ecommerce's logout implementation supports different site configuration.
+AUTH_URLS = [url(r'^logout/$', LogoutView.as_view(), name='logout'), ] + oauth2_urlpatterns
 
 
 class DashboardApplication(app.DashboardApplication):
