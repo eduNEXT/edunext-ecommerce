@@ -381,11 +381,11 @@ class SiteConfiguration(models.Model):
             url,
             self.oauth_settings.get(  # pylint: disable=unsubscriptable-object
                 'BACKEND_SERVICE_EDX_OAUTH2_KEY',
-                self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_KEY'],
+                self.oauth_settings.get('SOCIAL_AUTH_EDX_OIDC_KEY'),
             ),
             self.oauth_settings.get(  # pylint: disable=unsubscriptable-object
                 'BACKEND_SERVICE_EDX_OAUTH2_SECRET',
-                self.oauth_settings['SOCIAL_AUTH_EDX_OIDC_SECRET'],
+                self.oauth_settings.get('SOCIAL_AUTH_EDX_OIDC_SECRET'),
             ),
             token_type='jwt'
         )
