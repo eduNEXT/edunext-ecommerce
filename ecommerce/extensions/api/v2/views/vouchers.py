@@ -335,7 +335,10 @@ class VoucherViewSet(NonDestroyableModelViewSet):
         elif 'card_image_url' in course_info:
             image = course_info['card_image_url']
         else:
-            image = ''
+            try:
+                image = course_info['media']['image']['raw']
+            except (KeyError, TypeError):
+                image = ''
         return {
             'benefit': serializers.BenefitSerializer(benefit).data,
             'contains_verified': is_verified,
