@@ -22,6 +22,7 @@ djangorestframework
 djangorestframework-csv
 djangorestframework-datatables
 drf-extensions
+ecommerce-extensions[sentry]
 edx-auth-backends
 edx-django-release-util
 edx-django-utils
