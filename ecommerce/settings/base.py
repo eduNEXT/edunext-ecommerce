@@ -201,6 +201,7 @@ TEMPLATES = [
                 'oscar.core.context_processors.metadata',
                 'ecommerce.core.context_processors.core',
                 'ecommerce.extensions.analytics.context_processors.analytics',
+                'ecommerce_extensions.tenant.context_processors.theme_options',
             ),
             'debug': True,  # Django will only display debug pages if the global DEBUG setting is set to True.
         }
@@ -318,6 +319,7 @@ LOCAL_APPS = [
     'ecommerce.enterprise',
     'ecommerce.management',
     'ecommerce.journals',  # TODO: journals dependency
+    'ecommerce_extensions.tenant.apps.TenantConfig',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
