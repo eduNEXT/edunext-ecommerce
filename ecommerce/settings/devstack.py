@@ -96,6 +96,9 @@ SAILTHRU_SECRET = 'top_secret'
 
 REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] + ('rest_framework.renderers.BrowsableAPIRenderer',)
 
+# Edunext setting_ enabling getting course data from LMS API
+ENABLE_GET_COURSE_INFO_FROM_LMS = True
+
 #####################################################################
 # Lastly, see if the developer has any local overrides.
 if os.path.isfile(join(dirname(abspath(__file__)), 'private.py')):

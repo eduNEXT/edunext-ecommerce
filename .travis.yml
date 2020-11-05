@@ -6,7 +6,6 @@ services:
   - docker
 
 cache:
-  - pip
   - directories:
     - node_modules
     - ecommerce/static/bower_components
