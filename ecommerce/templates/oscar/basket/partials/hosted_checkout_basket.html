@@ -168,6 +168,9 @@
                             {% elif processor.NAME == 'payu' %}
                                 {# Translators: Do NOT translate the name PayU. #}
                                 {% trans "Checkout with PayU" as tmsg %}{{ tmsg | force_escape }}
+                            {% elif processor.NAME == 'fomopay' %}
+                                {# Translators: Do NOT translate the name WeChat. #}
+                                {% trans "Checkout with WeChat" as tmsg %}{{ tmsg | force_escape }}
                             {% endif %}
                         </button>
                     {% endfor %}
