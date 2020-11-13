@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.conf.urls import include, url
+from ecommerce_extensions.urls import urlpatterns as url_extensions
 
 from ecommerce.extensions.payment.views import PaymentFailedView, SDNFailure, cybersource, paypal, stripe
 
@@ -31,6 +32,7 @@ STRIPE_URLS = [
 ]
 
 urlpatterns = [
+    url('', include((url_extensions, 'ecommerce_extensions'))),
     url(r'^cybersource/', include((CYBERSOURCE_URLS, 'cybersource'))),
     url(r'^error/$', PaymentFailedView.as_view(), name='payment_error'),
     url(r'^paypal/', include((PAYPAL_URLS, 'paypal'))),
