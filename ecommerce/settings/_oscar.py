@@ -130,6 +130,7 @@ PAYMENT_PROCESSORS = (
     'ecommerce.extensions.payment.processors.paypal.Paypal',
     'ecommerce.extensions.payment.processors.stripe.Stripe',
     'ecommerce_extensions.payment.processors.payu.Payu',
+    'ecommerce_extensions.payment.processors.fomopay.Fomopay',
 )
 
 PAYMENT_PROCESSOR_RECEIPT_PATH = '/checkout/receipt/'

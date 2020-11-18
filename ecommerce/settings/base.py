@@ -319,6 +319,7 @@ LOCAL_APPS = [
     'ecommerce.enterprise',
     'ecommerce.management',
     'ecommerce.journals',  # TODO: journals dependency
+    'ecommerce_extensions.apps.EcommerceExtensionsConfig',
     'ecommerce_extensions.tenant.apps.TenantConfig',
 ]
 
