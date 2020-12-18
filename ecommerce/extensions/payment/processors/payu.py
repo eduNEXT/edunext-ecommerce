@@ -79,7 +79,6 @@ class Payu(BasePaymentProcessor):
             'payment_page_url': self.payment_page_url,
             'merchantId': self.merchant_id,
             'accountId': self.account_id,
-            'ApiKey': self.api_key,
             'referenceCode': basket.order_number,
             'tax': self.tax,
             'taxReturnBase': self.tax_return_base,
