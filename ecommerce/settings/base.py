@@ -626,6 +626,7 @@ EDX_DRF_EXTENSIONS = {
         'full_name': 'full_name',
         'tracking_context': 'tracking_context',
         'user_id': 'lms_user_id',
+        'extended_profile_fields': 'extended_profile_fields',
     },
     'JWT_PAYLOAD_MERGEABLE_USER_ATTRIBUTES': (
         'tracking_context',
