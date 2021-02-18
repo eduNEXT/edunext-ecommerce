@@ -471,7 +471,9 @@ ENABLE_AUTO_AUTH = False
 # If it were not set, we would be unable to automatically remove all auto-auth users.
 AUTO_AUTH_USERNAME_PREFIX = 'AUTO_AUTH_'
 
-AUTHENTICATION_BACKENDS = ('auth_backends.backends.EdXOAuth2',) + AUTHENTICATION_BACKENDS
+# ednx: we extend the original backend via the ecommerce-extensions app
+# see: https://github.com/eduNEXT/ecommerce-extensions/blob/main/ecommerce_extensions/auth_backends/backends.py
+AUTHENTICATION_BACKENDS = ('ecommerce_extensions.auth_backends.backends.EcommerceExtensionsAuth2',) + AUTHENTICATION_BACKENDS
 
 SOCIAL_AUTH_STRATEGY = 'ecommerce.social_auth.strategies.CurrentSiteDjangoStrategy'
 
