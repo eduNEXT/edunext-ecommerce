@@ -50,7 +50,7 @@ djangorestframework-datatables==0.5.2  # via -r requirements/base.in
 djangorestframework==3.11.0  # via -r requirements/base.in, django-rest-swagger, djangorestframework-csv, djangorestframework-datatables, drf-extensions, drf-jwt, edx-drf-extensions, rest-condition
 drf-extensions==0.6.0     # via -r requirements/base.in
 drf-jwt==1.14.0           # via -c requirements/pins.txt, edx-drf-extensions
-ecommerce-extensions==1.2.0  # via -r requirements/base.in
+ecommerce-extensions[sentry]==1.2.1  # via -r requirements/base.in
 edx-auth-backends==3.0.2  # via -r requirements/base.in
 edx-django-release-util==0.4.2  # via -r requirements/base.in
 edx-django-sites-extensions==2.4.3  # via -r requirements/base.in
