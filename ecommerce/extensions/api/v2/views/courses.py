@@ -3,10 +3,11 @@ from __future__ import absolute_import
 
 import waffle
 from django.db.models import Prefetch
+from ecommerce_extensions.core.permissions import HasConsoleAccess
 from oscar.core.loading import get_model
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ecommerce.core.constants import COURSE_ID_REGEX
@@ -29,7 +30,7 @@ class CourseViewSet(NonDestroyableModelViewSet):
     )
     lookup_value_regex = COURSE_ID_REGEX
     serializer_class = serializers.CourseSerializer
-    permission_classes = (IsAuthenticated, IsAdminUser,)
+    permission_classes = (IsAuthenticated, HasConsoleAccess)
 
     def get_queryset(self):
         site_configuration = self.request.site.siteconfiguration

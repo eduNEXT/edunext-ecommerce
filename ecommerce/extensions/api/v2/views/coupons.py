@@ -9,9 +9,10 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from ecommerce_extensions.core.permissions import HasConsoleAccess
 from oscar.core.loading import get_model
 from rest_framework import generics, serializers, status, viewsets
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ecommerce.core.constants import COUPON_PRODUCT_CLASS_NAME
@@ -56,7 +57,7 @@ DEPRECATED_COUPON_CATEGORIES = ['Bulk Enrollment']
 
 class CouponViewSet(EdxOrderPlacementMixin, viewsets.ModelViewSet):
     """ Coupon resource. """
-    permission_classes = (IsAuthenticated, IsAdminUser)
+    permission_classes = (IsAuthenticated, HasConsoleAccess)
     filterset_class = ProductFilter
 
     def get_queryset(self):

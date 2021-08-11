@@ -2,13 +2,14 @@ from __future__ import absolute_import
 
 import logging
 
+from ecommerce_extensions.core.permissions import HasConsoleAccess
 from oscar.core.loading import get_model
 from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import Timeout
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_extensions.mixins import NestedViewSetMixin
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class CatalogViewSet(NestedViewSetMixin, ReadOnlyModelViewSet):
     serializer_class = serializers.CatalogSerializer
-    permission_classes = (IsAuthenticated, IsAdminUser,)
+    permission_classes = (IsAuthenticated, HasConsoleAccess)
 
     def get_queryset(self):
         self.queryset = Catalog.objects.all()

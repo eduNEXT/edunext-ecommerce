@@ -9,11 +9,10 @@ from django.conf import settings
 from django.core.management import call_command
 from django.http import Http404, HttpResponse
 from django.views.generic import TemplateView, View
+from ecommerce_extensions.core.mixins import ConsoleAccessMixin as StaffOnlyMixin
 from edx_django_utils.cache import TieredCache
 from requests import Timeout
 from slumber.exceptions import SlumberBaseException
-
-from ecommerce.core.views import StaffOnlyMixin
 
 logger = logging.getLogger(__name__)
 
