@@ -8,9 +8,9 @@ from django.http import HttpResponse
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
+from ecommerce_extensions.core.mixins import ConsoleAccessMixin as StaffOnlyMixin
 from oscar.core.loading import get_model
 
-from ecommerce.core.views import StaffOnlyMixin
 from ecommerce.extensions.voucher.utils import generate_coupon_report
 
 logger = logging.getLogger(__name__)

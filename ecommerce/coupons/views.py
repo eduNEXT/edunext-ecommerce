@@ -15,12 +15,12 @@ from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.views.generic import TemplateView, View
+from ecommerce_extensions.core.mixins import ConsoleAccessMixin as StaffOnlyMixin
 from edx_rest_framework_extensions.permissions import LoginRedirectIfUnauthenticated
 from oscar.core.loading import get_class, get_model
 from rest_framework.views import APIView
 
 from ecommerce.core.url_utils import absolute_redirect, get_ecommerce_url
-from ecommerce.core.views import StaffOnlyMixin
 from ecommerce.coupons.decorators import login_required_for_credit
 from ecommerce.coupons.utils import is_voucher_applied
 from ecommerce.enterprise.decorators import set_enterprise_cookie
