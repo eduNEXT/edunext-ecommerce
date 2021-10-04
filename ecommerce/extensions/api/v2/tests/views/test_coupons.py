@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 import datetime
 import json
 from decimal import Decimal
@@ -9,6 +8,7 @@ from uuid import uuid4
 import ddt
 import httpretty
 import mock
+import pytest
 import pytz
 from django.test import RequestFactory
 from django.urls import reverse
@@ -712,6 +712,7 @@ class CouponViewSetFunctionalTest(CouponMixin, DiscoveryTestMixin, DiscoveryMock
         self.assertEqual(voucher_range.catalog_query, data['catalog_query'])
         self.assertEqual(voucher_range.course_seat_types, data['course_seat_types'][0])
 
+    @pytest.mark.skip(reason="tests a behavior of coupon enterprise that is not used in edunext")
     def test_update_catalog_type(self):
         """Test updating dynamic range values deletes catalog."""
         voucher_range, data = self._get_voucher_range_with_updated_dynamic_catalog_values()
@@ -719,6 +720,7 @@ class CouponViewSetFunctionalTest(CouponMixin, DiscoveryTestMixin, DiscoveryMock
         self.assertEqual(voucher_range.catalog_query, data['catalog_query'])
         self.assertEqual(voucher_range.course_seat_types, data['course_seat_types'][0])
 
+    @pytest.mark.skip(reason="tests a behavior of coupon enterprise that is not used in edunext")
     def test_update_course_catalog_coupon(self):
         """
         Test that on updating a coupon as course catalog coupon with course
@@ -761,8 +763,8 @@ class CouponViewSetFunctionalTest(CouponMixin, DiscoveryTestMixin, DiscoveryMock
         }
 
         logger_name = 'ecommerce.core.utils'
-        expected_logger_message = 'Failed to create Range. Either catalog_query or course_catalog must be given ' \
-                                  'but not both and course_seat_types fields must be set.'
+        expected_logger_message = 'Failed to create Range. Catalog and dynamic catalog fields may not be set ' \
+                                  'in the same range.'
         with LogCapture(logger_name) as logger:
             response = self.get_response('PUT', path, data)
 
