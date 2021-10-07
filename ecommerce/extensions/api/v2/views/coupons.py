@@ -407,10 +407,10 @@ class CouponViewSet(EdxOrderPlacementMixin, viewsets.ModelViewSet):
         # Remove catalog if switching from single course to dynamic query
         # In case of enterprise, range_data has enterprise data in it as enterprise is defined in UPDATABLE_RANGE_FIELDS
         # so Catalog should not be None if there is an enterprise is associated with it.
+        #
+        # eduNEXT: removing the catalog deletes the course from the coupon
+        # see: https://github.com/eduNEXT/edunext-ecommerce/pull/64
         if voucher_range.catalog:
-            if not enterprise_customer_data:
-                range_data['catalog'] = None
-
             if enterprise_customer_data and range_data.get('catalog_query'):
                 range_data['catalog'] = None
 
