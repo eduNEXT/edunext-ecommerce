@@ -1,0 +1,36 @@
+# This is only meant to be used for testing on travis-ci.org
+version: "2"
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: db
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_DATABASE: "ecommerce"
+  ecommerce:
+    image: edxops/ecommerce:latest
+    container_name: ecommerce_testing
+    volumes:
+      - ..:/edx/app/ecommerce/ecommerce
+      - $HOME/.cache/pip:/edx/app/ecommerce/.cache/pip
+      - /edx/app/ecommerce/ecommerce/node_modules
+    # The docker container produced from configuration.git does not currently
+    # run and expose a port for ecommerce.  This means that we need to run some
+    # command that keeps the ecommerce container alive while we run tests on it.
+    # We have not yet standardized on an init replacement which could be used instead.
+    command: tail -f /dev/null
+    depends_on:
+      - db
+    environment:
+      CONN_MAX_AGE: 60
+      DB_ENGINE: "django.db.backends.mysql"
+      DB_HOST: "db"
+      DB_NAME: "ecommerce"
+      DB_PASSWORD: "password"
+      DB_PORT: "3306"
+      DB_USER: "root"
+      DJANGO_SETTINGS_MODULE: "ecommerce.settings.test"
+      JASMINE_HOSTNAME: "localhost"
+      JASMINE_WEB_DRIVER: "FirefoxHeadless"
