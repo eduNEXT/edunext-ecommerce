@@ -279,7 +279,7 @@ class BasketLogicMixin:
                     pass
 
             course_data['product_description'] = course.get('short_description', '')
-            course_data['product_title'] = course.get('name', course.get('title', ''))
+            course_data['product_title'] = course.get('name') or course.get('title', '')
 
             # The course start/end dates are not currently used
             # in the default basket templates, but we are adding
