@@ -324,6 +324,7 @@ LOCAL_APPS = [
     'ecommerce.sailthru',
     'ecommerce.enterprise',
     'ecommerce.management',
+    'ecommerce_extensions.apps.EcommerceExtensionsConfig',
     'ecommerce_extensions.tenant.apps.TenantConfig',
 ]
 
