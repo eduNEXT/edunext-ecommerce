@@ -4,11 +4,10 @@
 
 import datetime
 import json
-import re
 from decimal import Decimal
 
-import httpretty
 import jwt
+import responses
 from crum import set_current_request
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -16,6 +15,7 @@ from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils.timezone import now
 from edx_django_utils.cache import TieredCache
+from edx_rest_api_client.client import _get_oauth_url
 from edx_rest_framework_extensions.auth.jwt.cookies import jwt_cookie_name
 from edx_rest_framework_extensions.auth.jwt.tests.utils import generate_jwt_token, generate_unversioned_payload
 from mock import patch
@@ -359,11 +359,7 @@ class SiteMixin:
 
     def mock_access_token_response(self, status=200, **token_data):
         """ Mock the response from the OAuth provider's access token endpoint. """
-        assert httpretty.is_enabled(), 'httpretty must be enabled to mock the access token response.'
-
-        # Use a regex to account for the optional trailing slash
-        url = '{root}/access_token/?'.format(root=self.site.siteconfiguration.oauth2_provider_url)
-        url = re.compile(url)
+        url = _get_oauth_url(settings.BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL)
 
         token = 'abc123'
         data = {
@@ -371,8 +367,7 @@ class SiteMixin:
             'expires_in': 3600,
         }
         data.update(token_data)
-        body = json.dumps(data)
-        httpretty.register_uri(httpretty.POST, url, body=body, content_type=CONTENT_TYPE, status=status)
+        responses.add(responses.POST, url, json=data, content_type=CONTENT_TYPE, status=status)
 
         return token
 
@@ -388,10 +383,8 @@ class ApiMockMixin:
     """ Common Mocks for the API responses. """
 
     def mock_api_error(self, error, url):
-        def callback(request, uri, headers):  # pylint: disable=unused-argument
-            raise error
 
-        httpretty.register_uri(httpretty.GET, url, body=callback, content_type=CONTENT_TYPE)
+        responses.add(responses.GET, url, body=error, content_type=CONTENT_TYPE)
 
 
 class LmsApiMockMixin:
@@ -413,10 +406,9 @@ class LmsApiMockMixin:
             'name': course.name if course else 'Test course',
             'org': 'test'
         }
-        course_info_json = json.dumps(course_info)
         course_id = course.id if course else 'course-v1:test+test+test'
         course_url = get_lms_url('api/courses/v1/courses/{}/'.format(course_id))
-        httpretty.register_uri(httpretty.GET, course_url, body=course_info_json, content_type=CONTENT_TYPE)
+        responses.add(responses.GET, course_url, json=course_info, content_type=CONTENT_TYPE)
 
     def mock_account_api(self, request, username, data):
         """ Mock the account LMS API endpoint for a user.
@@ -430,8 +422,7 @@ class LmsApiMockMixin:
             host=request.site.siteconfiguration.build_lms_url('/api/user/v1'),
             username=username,
         )
-        body = json.dumps(data)
-        httpretty.register_uri(httpretty.GET, url, body=body, content_type=CONTENT_TYPE)
+        responses.add(responses.GET, url, json=data, content_type=CONTENT_TYPE)
 
     def mock_accounts_api_using_email(self, request, user):
         """ Mock the account LMS API endpoint for a user.
@@ -445,11 +436,11 @@ class LmsApiMockMixin:
             email=user.email,
         )
         data = [{
-            'id': user.id,
-            'username': user.username,
-        }]
-        body = json.dumps(data)
-        httpretty.register_uri(httpretty.GET, url, body=body, content_type=CONTENT_TYPE)
+            'id': user['lms_user_id'],
+            'username': user['username'],
+            'email': user['email'],
+        } for user in users]
+        responses.add(responses.POST, url, json=data, content_type=CONTENT_TYPE)
 
     def mock_eligibility_api(self, request, user, course_key, eligible=True):
         """ Mock eligibility API endpoint. Returns eligibility data. """
@@ -461,9 +452,9 @@ class LmsApiMockMixin:
         url = '{host}/eligibility/?username={username}&course_key={course_key}'.format(
             host=request.site.siteconfiguration.build_lms_url('/api/credit/v1'),
             username=user.username,
-            course_key=course_key
+            course_key=course_key.replace("+", "%2B")
         )
-        httpretty.register_uri(httpretty.GET, url, body=json.dumps(eligibility_data), content_type=CONTENT_TYPE)
+        responses.add(responses.GET, url, json=eligibility_data, content_type=CONTENT_TYPE)
 
     @staticmethod
     def get_default_expiration():
@@ -497,7 +488,12 @@ class LmsApiMockMixin:
             host=request.site.siteconfiguration.build_lms_url('/api/user/v1'),
             username=username
         )
-        httpretty.register_uri(httpretty.POST, url, body=response, content_type=CONTENT_TYPE)
+        responses.add(
+            responses.POST,
+            url,
+            body=response() if callable(response) else response,
+            content_type=CONTENT_TYPE
+        )
 
 
 class TestWaffleFlagMixin:

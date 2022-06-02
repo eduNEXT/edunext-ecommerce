@@ -1,6 +1,6 @@
+from urllib.parse import urljoin
 
-
-from edx_rest_api_client.client import EdxRestApiClient
+from edx_rest_api_client.client import OAuthAPIClient
 
 from e2e.config import (
     DISCOVERY_API_URL_ROOT,
@@ -18,42 +18,61 @@ class BaseApi:
 
     def __init__(self):
         assert self.api_url_root
-        access_token, __ = self.get_access_token()
-        self._client = EdxRestApiClient(self.api_url_root, jwt=access_token, append_slash=self.append_slash)
+        self._client = OAuthAPIClient(OAUTH_ACCESS_TOKEN_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
 
-    @staticmethod
-    def get_access_token():
-        """ Returns an access token and expiration date from the OAuth provider.
-
-        Returns:
-            (str, datetime)
+    def get_api_url(self, path):
         """
-        return EdxRestApiClient.get_oauth_access_token(
-            OAUTH_ACCESS_TOKEN_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, token_type='jwt'
-        )
+        Construct the full API URL using the api_url_root and path.
+
+        Args:
+            path (str): API endpoint path.
+        """
+        path = path.strip('/')
+        if self.append_slash:
+            path += '/'
+
+        return urljoin(f"{self.api_url_root}/", path)  # type: ignore
 
 
 class DiscoveryApi(BaseApi):
     api_url_root = DISCOVERY_API_URL_ROOT
 
-    def get_course_run(self, seat_type):
-        """ Returns a dict containing data for a current course run with the given seat type.
+    def get_course_runs(self, seat_type):
+        """ Returns a list of dicts containing data for current course runs with the given seat type.
 
-        The search endpoint is used to find an available course run. Ultimately, the data returned comes from the
-        course run detail endpoint.
+        The search endpoint is used to find available course runs. Ultimately, the data returned comes from the
+        course run detail endpoint called from get_course_run.
 
         Args:
             seat_type (str)
 
         Returns:
+            list(dict)
+        """
+        response = self._client.get(
+            self.get_api_url("search/course_runs/facets/"),
+            params={
+                "selected_query_facets": "availability_current",
+                "selected_facets": f"seat_types_exact:{seat_type}"
+            }
+        )
+        response.raise_for_status()
+        return response.json()['objects']['results']
+
+    def get_course_run(self, course_run):
+        """ Returns the details for a given course run.
+
+        Args:
+            course_run (str)
+
+        Returns:
             dict
         """
-        results = self._client.search.course_runs.facets.get(
-            selected_query_facets='availability_current', selected_facets='seat_types_exact:{}'.format(seat_type))
-        results = results['objects']['results']
-        # TODO Verify the course run exists on LMS and Otto. Some course runs are only present on Drupal.
-        # TODO Cache the result so we don't waste resources doing this work again. The search endpoint order is stable.
-        return self._client.course_runs(results[0]['key']).get()
+        response = self._client.get(
+            self.get_api_url(f"course_runs/{course_run}/"),
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 class EcommerceApi(BaseApi):
@@ -69,10 +88,20 @@ class EcommerceApi(BaseApi):
         Returns:
             str[]: List of refund IDs.
         """
-        return self._client.refunds.post({'username': username, 'course_id': course_run_id})
+        response = self._client.post(
+            self.get_api_url("refunds/"),
+            json={'username': username, 'course_id': course_run_id}
+        )
+        response.raise_for_status()
+        return response.json()
 
     def process_refund(self, refund_id, action):
-        return self._client.refunds(refund_id).process.put({'action': action})
+        response = self._client.put(
+            self.get_api_url(f"refunds/{refund_id}/process/"),
+            json={'action': action}
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 class EnrollmentApi(BaseApi):
@@ -86,4 +115,8 @@ class EnrollmentApi(BaseApi):
             username (str)
             course_run_id (str)
         """
-        return self._client.enrollment('{},{}'.format(username, course_run_id)).get()
+        response = self._client.get(
+            self.get_api_url(f"enrollment/{username},{course_run_id}")
+        )
+        response.raise_for_status()
+        return response.json()

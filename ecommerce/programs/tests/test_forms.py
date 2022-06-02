@@ -3,7 +3,7 @@
 
 import uuid
 
-import httpretty
+import responses
 from oscar.core.loading import get_model
 
 from ecommerce.extensions.test import factories
@@ -75,7 +75,7 @@ class ProgramOfferFormTests(ProgramTestMixin, TestCase):
         data = self.generate_data(program_uuid=offer.condition.program_uuid)
         self.assert_form_errors(data, {'program_uuid': ['An offer already exists for this program.']})
 
-    @httpretty.activate
+    @responses.activate
     def test_save_create(self):
         """ A new ConditionalOffer, Benefit, and Condition should be created. """
         data = self.generate_data()
@@ -86,7 +86,7 @@ class ProgramOfferFormTests(ProgramTestMixin, TestCase):
         self.assert_program_offer_conditions(offer, data['program_uuid'], data['benefit_value'], data['benefit_type'],
                                              'Discount for the Test Program MicroMockers Program')
 
-    @httpretty.activate
+    @responses.activate
     def test_save_create_special_char_title(self):
         """ When the title is international, A new ConditionalOffer, Benefit, and Condition should still be created."""
         data = self.generate_data()
@@ -99,7 +99,7 @@ class ProgramOfferFormTests(ProgramTestMixin, TestCase):
         self.assert_program_offer_conditions(offer, data['program_uuid'], data['benefit_value'], data['benefit_type'],
                                              'Discount for the Spánish Program MicroMockers Program')
 
-    @httpretty.activate
+    @responses.activate
     def test_save_edit(self):
         """ Previously-created ConditionalOffer, Benefit, and Condition instances should be updated. """
         offer = factories.ProgramOfferFactory()
@@ -113,7 +113,7 @@ class ProgramOfferFormTests(ProgramTestMixin, TestCase):
         self.assert_program_offer_conditions(offer, data['program_uuid'], data['benefit_value'], data['benefit_type'],
                                              'Discount for the Test Program MicroMockers Program')
 
-    @httpretty.activate
+    @responses.activate
     def test_save_without_commit(self):
         """ No data should be persisted to the database if the commit kwarg is set to False. """
         data = self.generate_data()
@@ -125,7 +125,7 @@ class ProgramOfferFormTests(ProgramTestMixin, TestCase):
         self.assertFalse(hasattr(instance, 'benefit'))
         self.assertFalse(hasattr(instance, 'condition'))
 
-    @httpretty.activate
+    @responses.activate
     def test_save_offer_name(self):
         """ If a request object is sent, the offer name should include program title and type. """
         data = self.generate_data()

@@ -8,9 +8,9 @@ from uuid import uuid4
 
 import bleach
 import ddt
-import httpretty
 import mock
-import rules
+import responses
+import rules  # pylint: disable=unused-import
 from django.conf import settings
 from django.test import override_settings
 from django.urls import reverse
@@ -19,8 +19,8 @@ from django.utils.http import urlencode
 from django.utils.timezone import now
 from oscar.core.loading import get_model
 from oscar.test import factories
+from requests.exceptions import HTTPError
 from rest_framework import status
-from slumber.exceptions import SlumberHttpBaseException
 
 from ecommerce.core.constants import (
     ALL_ACCESS_CONTEXT,
@@ -96,22 +96,11 @@ class TestEnterpriseCustomerView(EnterpriseServiceMockMixin, TestCase):
         }
     ]
 
-    @mock.patch('ecommerce.enterprise.utils.EdxRestApiClient')
-    @httpretty.activate
+    @mock.patch('ecommerce.core.models.SiteConfiguration.oauth_api_client')
+    @responses.activate
     def test_get_customers(self, mock_client):
         self.mock_access_token_response()
-        instance = mock_client.return_value
-        setattr(
-            instance,
-            'enterprise-customer',
-            mock.MagicMock(
-                basic_list=mock.MagicMock(
-                    get=mock.MagicMock(
-                        return_value=self.dummy_enterprise_customer_data
-                    )
-                )
-            ),
-        )
+        mock_client.get.return_value.json.return_value = self.dummy_enterprise_customer_data
         url = reverse('api:v2:enterprise:enterprise_customers')
         result = self.client.get(url)
         self.assertEqual(result.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -135,7 +124,6 @@ class TestEnterpriseCustomerCatalogsViewSet(EnterpriseServiceMockMixin, TestCase
         user = self.create_user(is_staff=True)
         self.client.login(username=user.username, password=self.password)
 
-        self.test_server_url = 'http://testserver.fake/'
         self.enterprise = '6ae013d4-c5c4-474d-8da9-0e559b2448e2'
         self.dummy_enterprise_customer_catalogs_data = {
             'count': 2,
@@ -199,24 +187,15 @@ class TestEnterpriseCustomerCatalogsViewSet(EnterpriseServiceMockMixin, TestCase
             "previous": '{}{}?page=1'.format(self.ENTERPRISE_CATALOG_URL, self.enterprise_catalog)
         }
 
-    @mock.patch('ecommerce.enterprise.utils.EdxRestApiClient')
-    @httpretty.activate
+    @mock.patch('ecommerce.core.models.SiteConfiguration.oauth_api_client')
+    @responses.activate
     def test_get_customer_catalogs(self, mock_client):
         """
         Tests that `EnterpriseCustomerCatalogsViewSet`get endpoint works as expected
         """
         self.mock_access_token_response()
 
-        instance = mock_client.return_value
-        setattr(
-            instance,
-            'enterprise_catalogs',
-            mock.MagicMock(
-                get=mock.MagicMock(
-                    return_value=self.dummy_enterprise_customer_catalogs_data
-                )
-            ),
-        )
+        mock_client.get.return_value.json.return_value = self.dummy_enterprise_customer_catalogs_data
 
         url = reverse('api:v2:enterprise:enterprise_customer_catalogs')
         result = self.client.get(url)
@@ -225,19 +204,17 @@ class TestEnterpriseCustomerCatalogsViewSet(EnterpriseServiceMockMixin, TestCase
 
         updated_response = dict(
             self.dummy_enterprise_customer_catalogs_data,
-            next='{}api/v2/enterprise/customer_catalogs?enterprise_customer={}&page=3'.format(
-                self.test_server_url,
+            next='http://testserver.fake/api/v2/enterprise/customer_catalogs?enterprise_customer={}&page=3'.format(
                 self.enterprise
             ),
-            previous="{}api/v2/enterprise/customer_catalogs?enterprise_customer={}&page=1".format(
-                self.test_server_url,
+            previous="http://testserver.fake/api/v2/enterprise/customer_catalogs?enterprise_customer={}&page=1".format(
                 self.enterprise
             ),
         )
 
         self.assertJSONEqual(result.content.decode('utf-8'), updated_response)
 
-    @httpretty.activate
+    @responses.activate
     def test_retrieve_customer_catalog(self):
         """
         Tests that `EnterpriseCustomerCatalogsViewSet` retrieve endpoint works as expected
@@ -255,12 +232,10 @@ class TestEnterpriseCustomerCatalogsViewSet(EnterpriseServiceMockMixin, TestCase
 
         response_with_updated_urls = dict(
             self.dummy_enterprise_customer_catalog_data,
-            next='{}api/v2/enterprise/customer_catalogs/{}?page=3'.format(
-                self.test_server_url,
+            next='http://testserver.fake/api/v2/enterprise/customer_catalogs/{}?page=3'.format(
                 self.enterprise_catalog
             ),
-            previous="{}api/v2/enterprise/customer_catalogs/{}?page=1".format(
-                self.test_server_url,
+            previous="http://testserver.fake/api/v2/enterprise/customer_catalogs/{}?page=1".format(
                 self.enterprise_catalog
             ),
         )
@@ -277,7 +252,7 @@ class TestEnterpriseCustomerCatalogsViewSet(EnterpriseServiceMockMixin, TestCase
 
         mock_path = 'ecommerce.extensions.api.v2.views.enterprise.get_enterprise_catalog'
         with mock.patch(mock_path) as mock_get_enterprise_catalog:
-            mock_get_enterprise_catalog.side_effect = SlumberHttpBaseException('Insecure connection')
+            mock_get_enterprise_catalog.side_effect = HTTPError('Insecure connection')
             with mock.patch('ecommerce.extensions.api.v2.views.enterprise.logger') as mock_logger:
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1199,7 +1174,81 @@ class EnterpriseCouponViewSetRbacTests(
         assert results[0]['code'] == voucher1.code
         assert results[0]['course_key'] is None
 
-    @httpretty.activate
+    @responses.activate
+    def test_search_results_regression_for_voucher_code(self):
+        """
+        Test regression for code search not returning all the expected results.
+        """
+        # Create coupons
+        self.create_coupon(
+            benefit_type=Benefit.PERCENTAGE,
+            benefit_value=40,
+            enterprise_customer=self.data['enterprise_customer']['id'],
+            enterprise_customer_catalog='aaaaaaaa-2c44-487b-9b6a-24eee973f9a4',
+            code='AAAAA',
+        )
+        coupon2 = self.create_coupon(
+            max_uses=5,
+            voucher_type=Voucher.MULTI_USE,
+            benefit_type=Benefit.FIXED,
+            benefit_value=13.37,
+            enterprise_customer=self.data['enterprise_customer']['id'],
+            enterprise_customer_catalog='bbbbbbbb-2c44-487b-9b6a-24eee973f9a4',
+            code='BBBBB',
+        )
+
+        # Assign codes using the assignment endpoint
+        self.assign_user_to_code(coupon2.id, [{'email': self.user.email}], ['BBBBB'])
+        self.assign_user_to_code(coupon2.id, [{'email': self.user.email}], ['BBBBB'])
+        self.assign_user_to_code(coupon2.id, [{'email': 'someotheruser@fake.com'}], ['BBBBB'])
+
+        # Redeem a voucher without using the assignment endpoint
+        voucher2 = coupon2.coupon_vouchers.first().vouchers.first()
+        self.use_voucher(voucher2, self.user)
+
+        mock_users = [
+            {'lms_user_id': self.user.lms_user_id, 'username': self.user.username, 'email': self.user.email}
+        ]
+        self.mock_bulk_lms_users_using_emails(self.request, mock_users)
+        self.mock_access_token_response()
+
+        response = self.get_response(
+            'GET',
+            reverse(
+                'api:v2:enterprise-coupons-search',
+                kwargs={'enterprise_id': self.data['enterprise_customer']['id']}
+            ),
+            data={'voucher_code': voucher2.code}
+        )
+        results = response.json()['results']
+
+        # We should have found 3 assignments and 1 redemption
+        redemptions = [
+            result for result in results
+            if result['redeemed_date'] is not None and result['code'] == 'BBBBB'
+        ]
+        assert len(redemptions) == 1
+        assert redemptions[0]['user_email'] == self.user.email
+
+        assignments = [
+            result for result in results
+            if result['redeemed_date'] is None and result['code'] == 'BBBBB'
+        ]
+        assert len(assignments) == 3
+
+        test_user_assignments = [
+            assignment for assignment in assignments
+            if assignment['user_email'] == self.user.email and assignment['code'] == 'BBBBB'
+        ]
+        assert len(test_user_assignments) == 2
+
+        someotheruser_assignments = [
+            assignment for assignment in assignments
+            if assignment['user_email'] == 'someotheruser@fake.com' and assignment['code'] == 'BBBBB'
+        ]
+        assert len(someotheruser_assignments) == 1
+
+    @responses.activate
     def test_permission_search_200(self):
         """
         Test that we get implicit access via role assignment
@@ -2852,6 +2901,7 @@ class EnterpriseCouponViewSetRbacTests(
         for offer_assignment in offer_assignments:
             self.assertIsNotNone(offer_assignment.last_reminder_date)
 
+    @responses.activate
     def test_coupon_codes_remind_all_partial_redeemed(self):
         """Test sending multiple remind requests (remind all partial redeemed assignments use case)."""
         emails = ['test1@example.com', 'test2@example.com']

@@ -14,9 +14,6 @@ cybersource-rest-client-python==0.0.21
 # Newer version introduces `No installed app with label 'communication'.`
 django-oscar<2.1
 
-# causing tests failures
-httpretty==0.9.7
-
 # jsonfield2 > 3.0.3 dropped support for python 3.5
 jsonfield2<=3.0.3
 
@@ -54,3 +51,17 @@ celery<5.0.0
 
 # Latest version requires PyJWT>=2.0.0 but drf-jwt requires PyJWT[crypto]<2.0.0,>=1.5.2
 social-auth-core<4.0.3
+
+# Versions higher than this need new PyJWT 2.1.0
+# pinning these to unstick 'make upgrade' until we're ready to upgrade PyJWT
+edx-drf-extensions<7.0.0
+edx-auth-backends<4.0.0
+social-auth-app-django<5.0.0  # version 5.0.0 requires social-auth-core>=4.1.0
+
+# greater version of cryptography has some backward incompatible changes.
+# We are planning django32 upgrade so pinning it to avoid any issue. After upgrade to 32, remove this.
+cryptography==3.4.8
+jsonschema==3.2.0
+
+# bok-choy 1.1.1 requires <4 (can remove once we have a version without that requirement)
+selenium<4.0.0
